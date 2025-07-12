@@ -7,24 +7,27 @@
   <style>
     body {
       margin: 0;
-      background: #0d0d0d;
-      color: #f2f2f2;
+      background: #000; /* خلفية مظلمة جدًا */
+      color: #cfcfcf;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
-      animation: flash 12s infinite;
+      overflow-x: hidden;
     }
 
-    @keyframes flash {
-      0%, 97%, 100% {
-        background-color: #0d0d0d;
-      }
-      98% {
-        background-color: #ffffff;
-      }
-      99% {
-        background-color: #aaaaaa;
-      }
+    /* بروق */
+    .lightning {
+      position: fixed;
+      background: rgba(0, 242, 255, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transition: opacity 0.15s ease-in-out;
     }
+
+    .lightning.left { top: 0; left: 0; width: 25vw; height: 100vh; }
+    .lightning.right { top: 0; right: 0; width: 25vw; height: 100vh; }
+    .lightning.top { top: 0; left: 0; width: 100vw; height: 25vh; }
+    .lightning.bottom { bottom: 0; left: 0; width: 100vw; height: 25vh; }
 
     header {
       background-image: url('banner.png');
@@ -35,6 +38,7 @@
       align-items: center;
       justify-content: center;
       position: relative;
+      filter: brightness(0.6);
     }
 
     header::after {
@@ -42,10 +46,11 @@
       position: absolute;
       font-size: 2.5em;
       font-weight: bold;
-      color: #ffffffcc;
-      background: rgba(0,0,0,0.4);
+      color: #00f2ff;
+      background: rgba(0, 0, 0, 0.5);
       padding: 10px 20px;
       border-radius: 12px;
+      text-shadow: 0 0 10px #00f2ff;
     }
 
     .games-container {
@@ -56,7 +61,7 @@
     }
 
     .game-card {
-      background: #1a1a1a;
+      background: #111;
       padding: 20px;
       border-radius: 15px;
       transition: transform 0.2s ease;
@@ -119,6 +124,12 @@
 </head>
 <body>
 
+  <!-- تأثير 4 بروق -->
+  <div class="lightning left" id="lightning-left"></div>
+  <div class="lightning right" id="lightning-right"></div>
+  <div class="lightning top" id="lightning-top"></div>
+  <div class="lightning bottom" id="lightning-bottom"></div>
+
   <header></header>
 
   <div class="games-container">
@@ -155,6 +166,33 @@
   <footer>
     تصميم وإبداع © ZEWEIL 2025
   </footer>
+
+  <script>
+    const flashes = [
+      document.getElementById("lightning-left"),
+      document.getElementById("lightning-right"),
+      document.getElementById("lightning-top"),
+      document.getElementById("lightning-bottom")
+    ];
+
+    function flash(index) {
+      flashes[index].style.opacity = Math.random() * 0.6 + 0.2;
+      setTimeout(() => {
+        flashes[index].style.opacity = 0;
+      }, 100);
+    }
+
+    function randomFlashLoop() {
+      const delay = Math.random() * 4000 + 2000; // من 2 إلى 6 ثواني
+      const index = Math.floor(Math.random() * flashes.length);
+      flash(index);
+      setTimeout(randomFlashLoop, delay);
+    }
+
+    window.onload = () => {
+      randomFlashLoop(); // يبدأ البرق
+    };
+  </script>
 
 </body>
 </html>
