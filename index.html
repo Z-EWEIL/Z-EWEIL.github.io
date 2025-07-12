@@ -5,29 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ZEWEIL GAMES</title>
   <style>
+    /* خلفية الفيديو */
+    #bg-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: -1;
+      filter: brightness(0.4) contrast(1.2) saturate(1.5);
+    }
+
     body {
       margin: 0;
-      background: #000; /* خلفية مظلمة جدًا */
+      background: #000;
       color: #cfcfcf;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
       overflow-x: hidden;
     }
-
-    /* بروق */
-    .lightning {
-      position: fixed;
-      background: rgba(0, 242, 255, 0.4);
-      opacity: 0;
-      pointer-events: none;
-      z-index: 9999;
-      transition: opacity 0.15s ease-in-out;
-    }
-
-    .lightning.left { top: 0; left: 0; width: 25vw; height: 100vh; }
-    .lightning.right { top: 0; right: 0; width: 25vw; height: 100vh; }
-    .lightning.top { top: 0; left: 0; width: 100vw; height: 25vh; }
-    .lightning.bottom { bottom: 0; left: 0; width: 100vw; height: 25vh; }
 
     header {
       background-image: url('banner.png');
@@ -64,7 +61,7 @@
       background: #111;
       padding: 20px;
       border-radius: 15px;
-      transition: transform 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
       box-shadow: 0 0 12px #000;
     }
 
@@ -85,7 +82,7 @@
 
     .game-card a {
       text-decoration: none;
-      color: #ffffff;
+      color: #fff;
       background-color: #00f2ff;
       padding: 10px 20px;
       border-radius: 8px;
@@ -99,13 +96,12 @@
     }
 
     .btn-subscribe {
-      margin: 10px 10px;
-      background: #ff0000;
+      margin: 10px;
       padding: 12px 24px;
       font-size: 16px;
       border: none;
       border-radius: 8px;
-      color: white;
+      color: #fff;
       text-decoration: none;
       display: inline-block;
     }
@@ -124,11 +120,11 @@
 </head>
 <body>
 
-  <!-- تأثير 4 بروق -->
-  <div class="lightning left" id="lightning-left"></div>
-  <div class="lightning right" id="lightning-right"></div>
-  <div class="lightning top" id="lightning-top"></div>
-  <div class="lightning bottom" id="lightning-bottom"></div>
+  <!-- فيديو الخلفية -->
+  <video autoplay muted loop playsinline id="bg-video">
+    <source src="lightning.mp4" type="video/mp4">
+    متصفحك لا يدعم تشغيل الفيديو.
+  </video>
 
   <header></header>
 
@@ -166,33 +162,6 @@
   <footer>
     تصميم وإبداع © ZEWEIL 2025
   </footer>
-
-  <script>
-    const flashes = [
-      document.getElementById("lightning-left"),
-      document.getElementById("lightning-right"),
-      document.getElementById("lightning-top"),
-      document.getElementById("lightning-bottom")
-    ];
-
-    function flash(index) {
-      flashes[index].style.opacity = Math.random() * 0.6 + 0.2;
-      setTimeout(() => {
-        flashes[index].style.opacity = 0;
-      }, 100);
-    }
-
-    function randomFlashLoop() {
-      const delay = Math.random() * 4000 + 2000; // من 2 إلى 6 ثواني
-      const index = Math.floor(Math.random() * flashes.length);
-      flash(index);
-      setTimeout(randomFlashLoop, delay);
-    }
-
-    window.onload = () => {
-      randomFlashLoop(); // يبدأ البرق
-    };
-  </script>
 
 </body>
 </html>
