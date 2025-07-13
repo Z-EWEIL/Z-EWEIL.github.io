@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>تسجيل دخول | ZEWEIL GAMES</title>
+  <style>
+    body {
+      background-color: #0d0d0d;
+      color: #f2f2f2;
+      font-family: Tahoma, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+    input {
+      padding: 10px;
+      font-size: 18px;
+      border-radius: 8px;
+      border: none;
+      margin: 10px 0;
+      width: 220px;
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #00f2ff;
+      color: black;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    h1 {
+      margin-bottom: 20px;
+      color: #00f2ff;
+    }
+  </style>
+</head>
+<body>
+  <h1>ZEWEIL GAMES</h1>
+  <p>ادخل اسمك لبدء اللعب:</p>
+  <input type="text" id="playerName" placeholder="اسم اللاعب">
+  <button onclick="startGame()">ابدأ اللعب</button>
+
+  <script>
+    function startGame() {
+      const name = document.getElementById("playerName").value.trim();
+      if (name) {
+        localStorage.setItem("zeweil_player_name", name);
+        window.location.href = "index.html";
+      } else {
+        alert("من فضلك أدخل اسمك.");
+      }
+    }
+  </script>
+</body>
+</html>
