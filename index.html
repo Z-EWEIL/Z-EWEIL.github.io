@@ -35,11 +35,6 @@
       border-radius: 12px;
     }
 
-    h2 {
-      color: #00f2ff;
-      margin-top: 20px;
-    }
-
     .games-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -107,26 +102,42 @@
       font-size: 14px;
       color: #666;
     }
+
+    #char-box {
+      display: none;
+      margin: 20px auto;
+      background: #1a1a1a;
+      padding: 15px;
+      border-radius: 12px;
+      max-width: 300px;
+      box-shadow: 0 0 10px #00f2ff;
+    }
+
+    #show-char {
+      margin-top: 15px;
+      background: #00f2ff;
+      color: black;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-  <script>
-    const name = localStorage.getItem("zeweil_player_name");
-    if (!name) {
-      window.location.href = "login.html";
-    }
-  </script>
-
   <header></header>
 
-  <h2>مرحباً، <span id="player-name"></span> 👋</h2>
+  <h2 id="welcome-text">مرحباً، ...</h2>
+  <p>نقاطك: <span id="player-points">0</span> ⭐</p>
 
-  <script>
-    document.getElementById("player-name").textContent = localStorage.getItem("zeweil_player_name");
-  </script>
+  <button id="show-char">🎭 شخصيتي</button>
+
+  <div id="char-box"></div>
 
   <div class="games-container">
+    <!-- ألعابك -->
     <div class="game-card">
       <img src="freefire.png" alt="Free Fire">
       <h3>Free Fire</h3>
@@ -152,12 +163,37 @@
     </div>
   </div>
 
+  <!-- أزرار المتابعة -->
   <a class="btn-subscribe" style="background:#ff0000;" href="https://m.youtube.com/@Youssef_Zeweil/shorts" target="_blank">اشترك في قناتي</a>
   <a class="btn-subscribe" style="background:#1877f2;" href="https://www.facebook.com/profile.php?id=100053479211691" target="_blank">تابعني على فيسبوك</a>
   <a class="btn-subscribe" style="background:#25D366;" href="https://wa.me/201014761698" target="_blank">راسلني على واتساب</a>
   <a class="btn-subscribe" style="background:#C13584;" href="https://www.instagram.com/jo_______ahmed?igsh=MTFjajVybTkydGVuYg==" target="_blank">تابعني على إنستجرام</a>
 
-  <footer>© 2025 ZEWEIL GAMES. جميع الحقوق محفوظة.</footer>
+  <footer>© 2025 ZEWEIL GAMES</footer>
 
+  <script>
+    const playerName = localStorage.getItem("zeweil_player_name");
+    const charKey = `zeweil_character_${playerName}`;
+    const selectedChar = localStorage.getItem(charKey) || "ZEWEIL BASIC 🧍‍♂️";
+
+    if (!playerName) {
+      window.location.href = "login.html";
+    } else {
+      const pointsKey = `zeweil_points_${playerName}`;
+      let currentPoints = parseInt(localStorage.getItem(pointsKey)) || 0;
+      localStorage.setItem(pointsKey, currentPoints);
+
+      document.getElementById("player-points").textContent = currentPoints;
+      document.getElementById("welcome-text").textContent = `مرحباً، ${playerName} (${selectedChar}) 👋`;
+    }
+
+    document.getElementById("show-char").onclick = () => {
+      document.getElementById("char-box").style.display = 'block';
+      document.getElementById("char-box").innerHTML = `
+        <h3>🎮 شخصيتك المختارة</h3>
+        <p style="font-size: 24px;">${selectedChar}</p>
+      `;
+    };
+  </script>
 </body>
 </html>
