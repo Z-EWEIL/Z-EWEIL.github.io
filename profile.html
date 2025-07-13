@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الملف الشخصي - ZEWEIL</title>
+  <style>
+    body {
+      background: #0d0d0d;
+      color: #f2f2f2;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      color: #00f2ff;
+    }
+
+    label {
+      display: block;
+      margin: 20px 0 10px;
+      font-size: 18px;
+    }
+
+    input, select {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      width: 250px;
+      font-size: 16px;
+    }
+
+    button {
+      margin-top: 30px;
+      padding: 12px 24px;
+      font-size: 16px;
+      background: #00f2ff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #00b4cc;
+    }
+
+    .success {
+      margin-top: 20px;
+      color: #00ff88;
+    }
+
+    a {
+      color: #00f2ff;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>👤 الملف الشخصي</h1>
+
+  <label for="name">اسمك:</label>
+  <input type="text" id="name" />
+
+  <label for="character">اختر شخصيتك:</label>
+  <select id="character">
+    <option value="ZEWEIL BASIC 🧍‍♂️">ZEWEIL BASIC 🧍‍♂️</option>
+    <option value="ZEWEIL STEALTH 🕵️‍♂️">ZEWEIL STEALTH 🕵️‍♂️</option>
+    <option value="ZEWEIL POWER 💪">ZEWEIL POWER 💪</option>
+    <option value="ZEWEIL SHADOW 🦸‍♂️">ZEWEIL SHADOW 🦸‍♂️</option>
+  </select>
+
+  <br>
+  <button onclick="saveProfile()">💾 حفظ التغييرات</button>
+
+  <p class="success" id="savedMsg"></p>
+
+  <a href="index.html">⬅️ العودة إلى الصفحة الرئيسية</a>
+
+  <script>
+    const nameInput = document.getElementById("name");
+    const charSelect = document.getElementById("character");
+    const savedMsg = document.getElementById("savedMsg");
+
+    const currentName = localStorage.getItem("zeweil_player_name") || "";
+
+    nameInput.value = currentName;
+
+    const currentChar = localStorage.getItem(`zeweil_character_${currentName}`) || "ZEWEIL BASIC 🧍‍♂️";
+    charSelect.value = currentChar;
+
+    function saveProfile() {
+      const newName = nameInput.value.trim();
+      const newChar = charSelect.value;
+
+      if (newName !== "") {
+        localStorage.setItem("zeweil_player_name", newName);
+        localStorage.setItem(`zeweil_character_${newName}`, newChar);
+
+        savedMsg.textContent = "✅ تم حفظ التغييرات بنجاح!";
+        setTimeout(() => {
+          savedMsg.textContent = "";
+        }, 2000);
+      }
+    }
+  </script>
+
+</body>
+</html>
