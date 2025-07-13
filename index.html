@@ -130,7 +130,14 @@
   <p>نقاطك: <span id="player-points">0</span> ⭐</p>
 
   <div class="games-container">
-    <!-- ألعاب -->
+
+    <!-- 🎮 لعبة Venge.io -->
+    <div class="game-card">
+      <img src="venge.png" alt="Venge.io">
+      <h3>Venge.io</h3>
+      <a href="https://venge.io" target="_blank">العب الآن</a>
+    </div>
+
     <div class="game-card">
       <img src="freefire.png" alt="Free Fire">
       <h3>Free Fire</h3>
@@ -175,7 +182,6 @@
       const pointsKey = `zeweil_points_${playerName}`;
       let currentPoints = parseInt(localStorage.getItem(pointsKey)) || 0;
 
-      // ✅ مكافأة يومية
       const today = new Date().toDateString();
       const lastRewardKey = `zeweil_last_reward_${playerName}`;
       const lastDate = localStorage.getItem(lastRewardKey);
