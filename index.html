@@ -103,68 +103,6 @@
       font-size: 14px;
       color: #666;
     }
-
-    /* لعبة ZEWEIL */
-    #zeweil-game-container {
-      margin: 40px auto;
-      max-width: 800px;
-      display: none;
-    }
-
-    #game {
-      position: relative;
-      width: 100%;
-      height: 400px;
-      background: linear-gradient(to bottom, #e0c281, #c9994a);
-      overflow: hidden;
-      border: 3px solid #5e3a1c;
-      box-shadow: 0 0 15px #5e3a1c;
-    }
-
-    #player {
-      position: absolute;
-      bottom: 40px;
-      left: 50px;
-      width: 40px;
-      height: 60px;
-      background: #0077ff;
-      border-radius: 10px;
-    }
-
-    .obstacle {
-      position: absolute;
-      bottom: 40px;
-      width: 30px;
-      height: 60px;
-      background: #7b3f00;
-      border-radius: 5px;
-    }
-
-    #scoreBoard, #message {
-      margin-top: 10px;
-      font-weight: bold;
-      color: #fff;
-    }
-
-    #message {
-      color: #ff4444;
-      margin-bottom: 10px;
-    }
-
-    .btn-play {
-      margin: 10px auto 20px;
-      background: #00f2ff;
-      padding: 12px 24px;
-      font-size: 18px;
-      border: none;
-      border-radius: 8px;
-      color: black;
-      cursor: pointer;
-    }
-
-    .btn-play:hover {
-      background: #00b4cc;
-    }
   </style>
 </head>
 <body>
@@ -196,151 +134,21 @@
       <a href="https://www.google.com/search?q=play+bloxd.io" target="_blank">العب مباشرة</a>
     </div>
 
+    <!-- 🎮 ZEWEIL Adventure -->
     <div class="game-card">
       <img src="zeweil-adventure.png" alt="ZEWEIL Adventure">
       <h3>ZEWEIL Adventure</h3>
-      <button class="btn-play" onclick="startGame()">ابدأ المغامرة</button>
+      <a href="adventure.html" class="btn-play" target="_blank">ابدأ المغامرة</a>
     </div>
   </div>
 
-  <div id="zeweil-game-container">
-    <div id="scoreBoard">النقاط: 0 | المرحلة: 1 / 10</div>
-    <div id="message"></div>
-    <div id="game">
-      <div id="player"></div>
-    </div>
-  </div>
-
+  <!-- أزرار التواصل -->
   <a class="btn-subscribe" style="background:#ff0000;" href="https://m.youtube.com/@Youssef_Zeweil/shorts" target="_blank">اشترك في قناتي</a>
   <a class="btn-subscribe" style="background:#1877f2;" href="https://www.facebook.com/profile.php?id=100053479211691" target="_blank">تابعني على فيسبوك</a>
   <a class="btn-subscribe" style="background:#25D366;" href="https://wa.me/201014761698" target="_blank">راسلني على واتساب</a>
   <a class="btn-subscribe" style="background:#C13584;" href="https://www.instagram.com/jo_______ahmed?igsh=MTFjajVybTkydGVuYg==" target="_blank">تابعني على إنستجرام</a>
 
   <footer>جميع الحقوق محفوظة © ZEWEIL 2025</footer>
-
-  <script>
-    function startGame() {
-      document.getElementById("zeweil-game-container").style.display = "block";
-    }
-
-    const game = document.getElementById("game");
-    const player = document.getElementById("player");
-    const scoreBoard = document.getElementById("scoreBoard");
-    const message = document.getElementById("message");
-
-    const ground = 40;
-    let score = 0, level = 1, maxLevel = 10;
-    let isJumping = false, gameOver = false;
-    let obstacles = [], speed = 4, freq = 1500;
-
-    document.addEventListener("keydown", e => {
-      if ((e.code === "Space" || e.code === "ArrowUp") && !isJumping && !gameOver) jump();
-    });
-
-    game.addEventListener("click", () => {
-      if (!isJumping && !gameOver) jump();
-    });
-
-    function jump() {
-      isJumping = true;
-      let start = null;
-      const height = 120, duration = 600;
-
-      function animate(ts) {
-        if (!start) start = ts;
-        let elapsed = ts - start;
-        const half = duration / 2;
-
-        if (elapsed < half) {
-          player.style.bottom = ground + (height * (elapsed / half)) + "px";
-        } else if (elapsed < duration) {
-          player.style.bottom = ground + height * (1 - ((elapsed - half) / half)) + "px";
-        } else {
-          player.style.bottom = ground + "px";
-          isJumping = false;
-          return;
-        }
-        requestAnimationFrame(animate);
-      }
-
-      requestAnimationFrame(animate);
-    }
-
-    function spawnObstacle() {
-      if (gameOver) return;
-      const obs = document.createElement("div");
-      obs.classList.add("obstacle");
-      obs.style.left = game.offsetWidth + "px";
-      obs.style.height = (40 + Math.random() * 30) + "px";
-      game.appendChild(obs);
-      obstacles.push(obs);
-    }
-
-    function updateObstacles() {
-      obstacles.forEach((obs, i) => {
-        let left = parseFloat(obs.style.left);
-        left -= speed;
-        if (left < -30) {
-          game.removeChild(obs);
-          obstacles.splice(i, 1);
-          score++;
-          updateScore();
-          if (score % maxLevel === 0) {
-            level++;
-            if (level > maxLevel) {
-              winGame(); return;
-            }
-            speed += 0.5;
-            freq = Math.max(600, freq - 100);
-            showMessage("بدأت المرحلة " + level);
-          }
-        } else {
-          obs.style.left = left + "px";
-        }
-
-        if (checkCollision(player, obs)) endGame();
-      });
-    }
-
-    function checkCollision(a, b) {
-      const r1 = a.getBoundingClientRect();
-      const r2 = b.getBoundingClientRect();
-      return !(r1.top > r2.bottom || r1.bottom < r2.top || r1.right < r2.left || r1.left > r2.right);
-    }
-
-    function updateScore() {
-      scoreBoard.textContent = `النقاط: ${score} | المرحلة: ${level} / ${maxLevel}`;
-    }
-
-    function showMessage(msg) {
-      message.textContent = msg;
-      setTimeout(() => message.textContent = "", 3000);
-    }
-
-    function endGame() {
-      gameOver = true;
-      showMessage("💀 انتهت اللعبة! نقاطك: " + score);
-    }
-
-    function winGame() {
-      gameOver = true;
-      showMessage("🏆 مبروك! خلصت كل المراحل!");
-    }
-
-    let lastSpawn = 0;
-    function gameLoop(ts = 0) {
-      if (gameOver) return;
-      if (ts - lastSpawn > freq) {
-        spawnObstacle();
-        lastSpawn = ts;
-      }
-      updateObstacles();
-      requestAnimationFrame(gameLoop);
-    }
-
-    updateScore();
-    gameLoop();
-  </script>
 
 </body>
 </html>
