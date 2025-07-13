@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>اختر شخصيتك | ZEWEIL GAMES</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0d0d0d;
+      color: #f2f2f2;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+    }
+
+    header {
+      background-color: #111;
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      color: #00f2ff;
+      box-shadow: 0 0 10px #00f2ff88;
+    }
+
+    .characters-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      padding: 30px;
+    }
+
+    .character-card {
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 12px #000;
+      transition: transform 0.2s ease;
+    }
+
+    .character-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 18px #00f2ff;
+    }
+
+    .character-icon {
+      font-size: 60px;
+    }
+
+    .character-name {
+      font-size: 20px;
+      margin: 10px 0;
+      color: #00f2ff;
+    }
+
+    .character-cost {
+      margin: 8px 0;
+    }
+
+    .select-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background-color: #00f2ff;
+      color: black;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+
+    .select-btn:disabled {
+      background-color: #444;
+      color: #aaa;
+      cursor: not-allowed;
+    }
+
+    footer {
+      background-color: #111;
+      padding: 10px;
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <header>🧍‍♂️ اختر شخصيتك في ZEWEIL GAMES</header>
+
+  <div id="player-points" style="margin-top:20px; font-size:18px;"></div>
+
+  <div class="characters-container" id="characters-container"></div>
+
+  <footer>© 2025 ZEWEIL GAMES. جميع الحقوق محفوظة.</footer>
+
+  <script>
+    const playerName = localStorage.getItem("zeweil_player_name");
+    if (!playerName) {
+      window.location.href = "login.html";
+    }
+
+    const pointsKey = `zeweil_points_${playerName}`;
+    const selectedCharKey = `zeweil_character_${playerName}`;
+
+    const points = parseInt(localStorage.getItem(pointsKey)) || 0;
+    document.getElementById("player-points").textContent = `نقاطك الحالية: ${points} ⭐`;
+
+    const characters = [
+      { name: "ZEWEIL BASIC", emoji: "🧍‍♂️", cost: 0 },
+      { name: "ZEWEIL SHADOW", emoji: "🕴️", cost: 100 },
+      { name: "ZEWEIL PHARAOH", emoji: "🏺👑", cost: 250 },
+      { name: "ZEWEIL CYBER", emoji: "🤖🔥", cost: 500 }
+    ];
+
+    const container = document.getElementById("characters-container");
+
+    characters.forEach(char => {
+      const card = document.createElement("div");
+      card.className = "character-card";
+
+      const emoji = document.createElement("div");
+      emoji.className = "character-icon";
+      emoji.textContent = char.emoji;
+
+      const name = document.createElement("div");
+      name.className = "character-name";
+      name.textContent = char.name;
+
+      const cost = document.createElement("div");
+      cost.className = "character-cost";
+      cost.textContent = `يتطلب ${char.cost} ⭐`;
+
+      const button = document.createElement("button");
+      button.className = "select-btn";
+
+      if (points >= char.cost) {
+        button.textContent = "اختر الشخصية";
+        button.onclick = () => {
+          localStorage.setItem(selectedCharKey, char.name);
+          alert(`تم اختيار ${char.name} بنجاح!`);
+        };
+      } else {
+        button.disabled = true;
+        button.textContent = `تحتاج إلى ${char.cost - points} ⭐`;
+      }
+
+      card.appendChild(emoji);
+      card.appendChild(name);
+      card.appendChild(cost);
+      card.appendChild(button);
+      container.appendChild(card);
+    });
+  </script>
+
+</body>
+</html>
