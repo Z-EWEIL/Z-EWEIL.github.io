@@ -35,6 +35,11 @@
       border-radius: 12px;
     }
 
+    h2 {
+      color: #00f2ff;
+      margin-top: 20px;
+    }
+
     .games-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -106,7 +111,20 @@
 </head>
 <body>
 
+  <script>
+    const name = localStorage.getItem("zeweil_player_name");
+    if (!name) {
+      window.location.href = "login.html";
+    }
+  </script>
+
   <header></header>
+
+  <h2>مرحباً، <span id="player-name"></span> 👋</h2>
+
+  <script>
+    document.getElementById("player-name").textContent = localStorage.getItem("zeweil_player_name");
+  </script>
 
   <div class="games-container">
     <div class="game-card">
@@ -132,17 +150,20 @@
       <h3>Bloxd.io</h3>
       <a href="https://www.google.com/search?q=play+bloxd.io" target="_blank">العب مباشرة</a>
     </div>
+
+    <div class="game-card">
+      <img src="zeweil-adventure.png" alt="ZEWEIL Adventure">
+      <h3>ZEWEIL Adventure</h3>
+      <a href="adventure.html" target="_blank">ابدأ المغامرة</a>
+    </div>
   </div>
 
-  <!-- أزرار المتابعة -->
   <a class="btn-subscribe" style="background:#ff0000;" href="https://m.youtube.com/@Youssef_Zeweil/shorts" target="_blank">اشترك في قناتي</a>
   <a class="btn-subscribe" style="background:#1877f2;" href="https://www.facebook.com/profile.php?id=100053479211691" target="_blank">تابعني على فيسبوك</a>
   <a class="btn-subscribe" style="background:#25D366;" href="https://wa.me/201014761698" target="_blank">راسلني على واتساب</a>
   <a class="btn-subscribe" style="background:#C13584;" href="https://www.instagram.com/jo_______ahmed?igsh=MTFjajVybTkydGVuYg==" target="_blank">تابعني على إنستجرام</a>
 
-  <footer>
-    ZEWEIL GAMES © 2025
-  </footer>
+  <footer>© 2025 ZEWEIL GAMES. جميع الحقوق محفوظة.</footer>
 
 </body>
 </html>
