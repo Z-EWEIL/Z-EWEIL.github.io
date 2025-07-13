@@ -130,7 +130,7 @@
   <p>نقاطك: <span id="player-points">0</span> ⭐</p>
 
   <div class="games-container">
-    <!-- ألعابك -->
+    <!-- ألعاب -->
     <div class="game-card">
       <img src="freefire.png" alt="Free Fire">
       <h3>Free Fire</h3>
@@ -174,7 +174,17 @@
     } else {
       const pointsKey = `zeweil_points_${playerName}`;
       let currentPoints = parseInt(localStorage.getItem(pointsKey)) || 0;
-      localStorage.setItem(pointsKey, currentPoints);
+
+      // ✅ مكافأة يومية
+      const today = new Date().toDateString();
+      const lastRewardKey = `zeweil_last_reward_${playerName}`;
+      const lastDate = localStorage.getItem(lastRewardKey);
+
+      if (lastDate !== today) {
+        currentPoints += 5;
+        localStorage.setItem(pointsKey, currentPoints);
+        localStorage.setItem(lastRewardKey, today);
+      }
 
       document.getElementById("player-points").textContent = currentPoints;
       document.getElementById("welcome-text").textContent = `مرحباً، ${playerName} (${selectedChar}) 👋`;
