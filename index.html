@@ -35,6 +35,21 @@
       border-radius: 12px;
     }
 
+    #profile-button {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background-color: #00f2ff;
+      color: black;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      z-index: 1000;
+    }
+
     .games-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -103,38 +118,16 @@
       color: #666;
     }
 
-    #char-box {
-      display: none;
-      margin: 20px auto;
-      background: #1a1a1a;
-      padding: 15px;
-      border-radius: 12px;
-      max-width: 300px;
-      box-shadow: 0 0 10px #00f2ff;
-    }
-
-    #show-char {
-      margin-top: 15px;
-      background: #00f2ff;
-      color: black;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
+
+  <a id="profile-button" href="profile.html">👤 <span id="profile-name">...</span></a>
 
   <header></header>
 
   <h2 id="welcome-text">مرحباً، ...</h2>
   <p>نقاطك: <span id="player-points">0</span> ⭐</p>
-
-  <button id="show-char">🎭 شخصيتي</button>
-
-  <div id="char-box"></div>
 
   <div class="games-container">
     <!-- ألعابك -->
@@ -185,15 +178,8 @@
 
       document.getElementById("player-points").textContent = currentPoints;
       document.getElementById("welcome-text").textContent = `مرحباً، ${playerName} (${selectedChar}) 👋`;
+      document.getElementById("profile-name").textContent = playerName;
     }
-
-    document.getElementById("show-char").onclick = () => {
-      document.getElementById("char-box").style.display = 'block';
-      document.getElementById("char-box").innerHTML = `
-        <h3>🎮 شخصيتك المختارة</h3>
-        <p style="font-size: 24px;">${selectedChar}</p>
-      `;
-    };
   </script>
 </body>
 </html>
