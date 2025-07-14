@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ZEWEIL GAMES - متجر الشخصيات</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0d0d0d;
+      color: #f2f2f2;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+    }
+    header {
+      background-image: url('banner.png');
+      background-size: cover;
+      background-position: center;
+      height: 230px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    header::after {
+      content: "ZEWEIL GAMES - المتجر";
+      position: absolute;
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #ffffffcc;
+      background: rgba(0,0,0,0.4);
+      padding: 10px 20px;
+      border-radius: 12px;
+    }
+    #back-button {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background-color: #00f2ff;
+      color: black;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      z-index: 1000;
+    }
+    .characters-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 30px;
+    }
+    .character-card {
+      background: #1a1a1a;
+      border-radius: 15px;
+      width: 180px;
+      cursor: pointer;
+      box-shadow: 0 0 10px #000;
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+      padding: 10px;
+      color: white;
+      user-select: none;
+    }
+    .character-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 15px #00f2ff;
+    }
+    .character-card.locked {
+      opacity: 0.5;
+      cursor: default;
+    }
+    .character-card.locked:hover {
+      transform: none;
+      box-shadow: none;
+    }
+    .character-card img {
+      width: 100%;
+      border-radius: 12px;
+    }
+    .character-name {
+      margin-top: 10px;
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+    .character-price {
+      margin-top: 5px;
+      color: #ccc;
+      font-size: 0.9em;
+    }
+    .btn-purchase {
+      margin-top: 10px;
+      background-color: #00cc44;
+      border: none;
+      color: black;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+    }
+    .btn-purchase:disabled {
+      background-color: #555;
+      cursor: not-allowed;
+      color: #ccc;
+    }
+    #secret-code-section {
+      margin-top: 40px;
+    }
+    #secret-code-input {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      width: 200px;
+      margin-right: 10px;
+      text-transform: uppercase;
+    }
+    #secret-code-button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      background-color: gold;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #message {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+  </style>
+</head>
+<body>
+
+  <a id="back-button" href="index.html">⬅️ العودة للرئيسية</a>
+  <header></header>
+
+  <h2>متجر الشخصيات</h2>
+  <p>نقاطك: <span id="player-points">0</span> ⭐</p>
+
+  <div class="characters-container" id="characters-container">
+    <!-- الشخصيات ستظهر هنا -->
+  </div>
+
+  <div id="secret-code-section">
+    <input type="text" id="secret-code-input" placeholder="أدخل الكود السري" />
+    <button id="secret-code-button">تفعيل الشخصية الغامضة</button>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    const playerName = localStorage.getItem("zeweil_player_name");
+    if (!playerName) {
+      window.location.href = "login.html";
+    }
+
+    const pointsKey = `zeweil_points_${playerName}`;
+    let playerPoints = parseInt(localStorage.getItem(pointsKey)) || 0;
+    const charKey = `zeweil_character_${playerName}`;
+
+    // قائمة الشخصيات مع الصور والأسعار
+    const characters = [
+      { name: "ZEWEIL BASIC", price: 0, img: "char_basic.png" },
+      { name: "SHADOW ZEWEIL", price: 100, img: "char_shadow.png" },
+      { name: "GOLDEN ZEWEIL", price: 300, img: "char_golden.png" },
+      { name: "CYBER ZEWEIL", price: 450, img: "char_cyber.png" },
+      { name: "PHARAOH ZEWEIL", price: 600, img: "char_pharaoh.png" }
+    ];
+
+    // هل تم تفعيل الشخصية الغامضة؟
+    const secretCharKey = `zeweil_secret_unlocked_${playerName}`;
+    let secretUnlocked = localStorage.getItem(secretCharKey) === "true";
+
+    // اضف الشخصية الغامضة للقائمة لو مفعلة
+    if (secretUnlocked) {
+      characters.push({ name: "؟؟؟", price: "-", img: "char_secret.png", secret: true });
+    }
+
+    const container = document.getElementById("characters-container");
+    const pointsDisplay = document.getElementById("player-points");
+    const messageDiv = document.getElementById("message");
+
+    function renderCharacters() {
+      container.innerHTML = "";
+      pointsDisplay.textContent = playerPoints;
+
+      characters.forEach(char => {
+        const card = document.createElement("div");
+        card.className = "character-card";
+
+        // هل الشخصية مفعلة أو مجانية؟
+        const ownedKey = `zeweil_owned_${playerName}_${char.name}`;
+        let owned = localStorage.getItem(ownedKey) === "true" || char.price === 0 || char.secret;
+
+        // إذا مش مملوكة وقيمة السعر أكبر من نقاط اللاعب قفلها
+        if (!owned && char.price !== "-" && playerPoints < char.price) {
+          card.classList.add("locked");
+        }
+
+        card.innerHTML = `
+          <img src="${char.img}" alt="${char.name}">
+          <div class="character-name">${char.name}</div>
+          <div class="character-price">${char.price === "-" ? "" : char.price + " نقطة"}</div>
+        `;
+
+        // زر شراء أو معلق
+        if (!owned && char.price !== "-") {
+          const buyBtn = document.createElement("button");
+          buyBtn.textContent = "شراء";
+          buyBtn.className = "btn-purchase";
+          buyBtn.disabled = playerPoints < char.price;
+          buyBtn.onclick = () => {
+            if (playerPoints >= char.price) {
+              playerPoints -= char.price;
+              localStorage.setItem(pointsKey, playerPoints);
+              localStorage.setItem(ownedKey, "true");
+              messageDiv.textContent = `تم شراء ${char.name} بنجاح!`;
+              renderCharacters();
+            }
+          };
+          card.appendChild(buyBtn);
+        } else if (char.secret) {
+          const info = document.createElement("div");
+          info.style.marginTop = "10px";
+          info.style.color = "#ffcc00";
+          info.textContent = "شخصية خاصة";
+          card.appendChild(info);
+        } else {
+          const ownedText = document.createElement("div");
+          ownedText.style.marginTop = "10px";
+          ownedText.style.color = "#00cc44";
+          ownedText.textContent = "مملوكة";
+          card.appendChild(ownedText);
+        }
+
+        container.appendChild(card);
+      });
+    }
+
+    renderCharacters();
+
+    // تفعيل الشخصية الغامضة بالكود السري
+    const secretInput = document.getElementById("secret-code-input");
+    const secretButton = document.getElementById("secret-code-button");
+
+    secretButton.addEventListener("click", () => {
+      const code = secretInput.value.trim().toUpperCase();
+      if (code === "XP2025") {
+        localStorage.setItem(secretCharKey, "true");
+        messageDiv.textContent = "تم تفعيل الشخصية الغامضة! اذهب لصفحة الملف الشخصي لاختيارها.";
+        renderCharacters();
+      } else {
+        messageDiv.textContent = "كود غير صحيح. حاول مرة أخرى.";
+      }
+      secretInput.value = "";
+    });
+
+  </script>
+</body>
+</html>
