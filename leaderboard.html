@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>لوحة المتصدرين - ZEWEIL GAMES</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      color: #00f2ff;
+      margin-bottom: 30px;
+    }
+    table {
+      width: 80%;
+      margin: 0 auto;
+      border-collapse: collapse;
+      background: #1a1a1a;
+    }
+    th, td {
+      padding: 15px;
+      border: 1px solid #444;
+    }
+    th {
+      background-color: #00b4cc;
+    }
+    tr:nth-child(even) {
+      background-color: #222;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏆 لوحة المتصدرين</h1>
+  <table id="leaderboard">
+    <thead>
+      <tr>
+        <th>الترتيب</th>
+        <th>الاسم</th>
+        <th>النقاط</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDq3w9uMEQSfBoSuQKEtfzf-OzS8NDZjEo",
+      authDomain: "zeweil-games.firebaseapp.com",
+      projectId: "zeweil-games",
+      storageBucket: "zeweil-games.firebasestorage.app",
+      messagingSenderId: "755780457980",
+      appId: "1:755780457980:web:92e10d4560f9cbd8bc8e79"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const tableBody = document.querySelector("#leaderboard tbody");
+
+    db.collection("players").orderBy("points", "desc").limit(10).get().then(snapshot => {
+      let rank = 1;
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${rank}</td>
+          <td>${data.name}</td>
+          <td>${data.points}</td>
+        `;
+        tableBody.appendChild(row);
+        rank++;
+      });
+    });
+  </script>
+</body>
+</html>
