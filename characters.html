@@ -42,8 +42,10 @@
       box-shadow: 0 0 18px #00f2ff;
     }
 
-    .character-icon {
-      font-size: 60px;
+    .character-card img {
+      width: 100%;
+      border-radius: 12px;
+      margin-bottom: 10px;
     }
 
     .character-name {
@@ -73,6 +75,27 @@
       cursor: not-allowed;
     }
 
+    #secret-input {
+      margin: 30px 10px 10px;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      width: 250px;
+    }
+
+    #check-secret {
+      padding: 10px 20px;
+      margin: 10px;
+      background-color: gold;
+      color: black;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
     footer {
       background-color: #111;
       padding: 10px;
@@ -87,67 +110,95 @@
 
   <div id="player-points" style="margin-top:20px; font-size:18px;"></div>
 
+  <input id="secret-input" placeholder="ادخل الكود السري 🔐">
+  <button id="check-secret">تحقق</button>
+
   <div class="characters-container" id="characters-container"></div>
 
   <footer>© 2025 ZEWEIL GAMES. جميع الحقوق محفوظة.</footer>
 
   <script>
     const playerName = localStorage.getItem("zeweil_player_name");
-    if (!playerName) {
-      window.location.href = "login.html";
-    }
+    if (!playerName) window.location.href = "login.html";
 
     const pointsKey = `zeweil_points_${playerName}`;
     const selectedCharKey = `zeweil_character_${playerName}`;
-
     const points = parseInt(localStorage.getItem(pointsKey)) || 0;
     document.getElementById("player-points").textContent = `نقاطك الحالية: ${points} ⭐`;
 
     const characters = [
-      { name: "ZEWEIL BASIC", emoji: "🧍‍♂️", cost: 0 },
-      { name: "ZEWEIL SHADOW", emoji: "🕴️", cost: 100 },
-      { name: "ZEWEIL PHARAOH", emoji: "🏺👑", cost: 250 },
-      { name: "ZEWEIL CYBER", emoji: "🤖🔥", cost: 500 }
+      { name: "ZEWEIL BASIC", image: "basic.png", cost: 0 },
+      { name: "SHADOW ZEWEIL", image: "shadow.png", cost: 100 },
+      { name: "PHARAOH ZEWEIL", image: "pharaoh.png", cost: 250 },
+      { name: "CYBER ZEWEIL", image: "cyber.png", cost: 500 }
     ];
 
-    const container = document.getElementById("characters-container");
+    let secretUnlocked = false;
 
-    characters.forEach(char => {
-      const card = document.createElement("div");
-      card.className = "character-card";
+    function renderCharacters() {
+      const container = document.getElementById("characters-container");
+      container.innerHTML = "";
 
-      const emoji = document.createElement("div");
-      emoji.className = "character-icon";
-      emoji.textContent = char.emoji;
+      let allCharacters = [...characters];
 
-      const name = document.createElement("div");
-      name.className = "character-name";
-      name.textContent = char.name;
-
-      const cost = document.createElement("div");
-      cost.className = "character-cost";
-      cost.textContent = `يتطلب ${char.cost} ⭐`;
-
-      const button = document.createElement("button");
-      button.className = "select-btn";
-
-      if (points >= char.cost) {
-        button.textContent = "اختر الشخصية";
-        button.onclick = () => {
-          localStorage.setItem(selectedCharKey, char.name);
-          alert(`تم اختيار ${char.name} بنجاح!`);
-        };
-      } else {
-        button.disabled = true;
-        button.textContent = `تحتاج إلى ${char.cost - points} ⭐`;
+      if (secretUnlocked) {
+        allCharacters.push({
+          name: "The Mysterious Zeweil",
+          image: "mysterious.png",
+          cost: 0
+        });
       }
 
-      card.appendChild(emoji);
-      card.appendChild(name);
-      card.appendChild(cost);
-      card.appendChild(button);
-      container.appendChild(card);
-    });
+      allCharacters.forEach(char => {
+        const card = document.createElement("div");
+        card.className = "character-card";
+
+        const img = document.createElement("img");
+        img.src = char.image;
+        img.alt = char.name;
+
+        const name = document.createElement("div");
+        name.className = "character-name";
+        name.textContent = char.name;
+
+        const cost = document.createElement("div");
+        cost.className = "character-cost";
+        cost.textContent = char.cost === 0 ? "🔓 مجانية" : `يتطلب ${char.cost} ⭐`;
+
+        const button = document.createElement("button");
+        button.className = "select-btn";
+
+        if (points >= char.cost) {
+          button.textContent = "اختر الشخصية";
+          button.onclick = () => {
+            localStorage.setItem(selectedCharKey, char.name);
+            alert(`تم اختيار ${char.name} بنجاح!`);
+          };
+        } else {
+          button.disabled = true;
+          button.textContent = `تحتاج إلى ${char.cost - points} ⭐`;
+        }
+
+        card.appendChild(img);
+        card.appendChild(name);
+        card.appendChild(cost);
+        card.appendChild(button);
+        container.appendChild(card);
+      });
+    }
+
+    renderCharacters();
+
+    document.getElementById("check-secret").onclick = () => {
+      const input = document.getElementById("secret-input").value.trim();
+      if (input === "XP2025") {
+        alert("🎉 تم فتح الشخصية السرية!");
+        secretUnlocked = true;
+        renderCharacters();
+      } else {
+        alert("❌ الكود غير صحيح");
+      }
+    };
   </script>
 
 </body>
