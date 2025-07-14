@@ -3,57 +3,72 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>تسجيل دخول | ZEWEIL GAMES</title>
+  <title>تسجيل الدخول - ZEWEIL</title>
   <style>
     body {
       background-color: #0d0d0d;
-      color: #f2f2f2;
-      font-family: Tahoma, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      flex-direction: column;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
     }
-    input {
-      padding: 10px;
-      font-size: 18px;
+    input, button {
+      padding: 10px 20px;
+      margin: 10px;
       border-radius: 8px;
       border: none;
-      margin: 10px 0;
-      width: 220px;
-      text-align: center;
     }
     button {
-      padding: 10px 20px;
-      font-size: 18px;
       background-color: #00f2ff;
       color: black;
-      border: none;
-      border-radius: 8px;
       cursor: pointer;
     }
-    h1 {
-      margin-bottom: 20px;
-      color: #00f2ff;
+    button:hover {
+      background-color: #00b4cc;
     }
   </style>
 </head>
 <body>
-  <h1>ZEWEIL GAMES</h1>
-  <p>ادخل اسمك لبدء اللعب:</p>
-  <input type="text" id="playerName" placeholder="اسم اللاعب">
-  <button onclick="startGame()">ابدأ اللعب</button>
+  <h1>🎮 مرحبًا بك في ZEWEIL</h1>
+  <p>أدخل اسمك للبدء:</p>
+  <input type="text" id="playerName" placeholder="اسم اللاعب" />
+  <button onclick="savePlayer()">دخول</button>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js"></script>
 
   <script>
-    function startGame() {
+    const firebaseConfig = {
+      apiKey: "AIzaSyDq3w9uMEQSfBoSuQKEtfzf-OzS8NDZjEo",
+      authDomain: "zeweil-games.firebaseapp.com",
+      projectId: "zeweil-games",
+      storageBucket: "zeweil-games.firebasestorage.app",
+      messagingSenderId: "755780457980",
+      appId: "1:755780457980:web:92e10d4560f9cbd8bc8e79"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function savePlayer() {
       const name = document.getElementById("playerName").value.trim();
-      if (name) {
-        localStorage.setItem("zeweil_player_name", name);
-        window.location.href = "index.html";
-      } else {
-        alert("من فضلك أدخل اسمك.");
-      }
+      if (name === "") return alert("من فضلك أدخل اسمك");
+
+      // نحفظ الاسم والنقاط في localStorage
+      localStorage.setItem("zeweil_player_name", name);
+      localStorage.setItem("zeweil_points_" + name, 0);
+
+      // نحفظه في Firebase
+      db.collection("players").doc(name).set({
+        name: name,
+        points: 0
+      }).then(() => {
+        window.location.href = "index.html"; // رجوع للصفحة الرئيسية
+      }).catch(error => {
+        console.error("خطأ في التسجيل:", error);
+        alert("حدث خطأ حاول مرة أخرى");
+      });
     }
   </script>
 </body>
