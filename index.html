@@ -35,12 +35,9 @@
       border-radius: 12px;
     }
 
-    #profile-button {
+    #profile-button, #shop-button, #leaderboard-button {
       position: absolute;
       top: 15px;
-      left: 15px;
-      background-color: #00f2ff;
-      color: black;
       padding: 8px 16px;
       border: none;
       border-radius: 10px;
@@ -48,21 +45,23 @@
       cursor: pointer;
       text-decoration: none;
       z-index: 1000;
+      color: black;
+    }
+
+    #profile-button {
+      left: 15px;
+      background-color: #00f2ff;
+    }
+
+    #shop-button {
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #ffcc00;
     }
 
     #leaderboard-button {
-      position: absolute;
-      top: 15px;
       right: 15px;
       background-color: gold;
-      color: black;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 10px;
-      font-weight: bold;
-      cursor: pointer;
-      text-decoration: none;
-      z-index: 1000;
     }
 
     .games-container {
@@ -132,13 +131,13 @@
       font-size: 14px;
       color: #666;
     }
-
   </style>
 </head>
 <body>
 
   <!-- أزرار علويّة -->
   <a id="profile-button" href="profile.html">👤 <span id="profile-name">...</span></a>
+  <a id="shop-button" href="shop.html">🛍️ المتجر</a>
   <a id="leaderboard-button" href="leaderboard.html">🏆 المتصدرون</a>
 
   <header></header>
