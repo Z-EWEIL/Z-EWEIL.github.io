@@ -177,7 +177,7 @@
     </div>
   </div>
 
-  <!-- روابط التواصل -->
+  <!-- أزرار المتابعة -->
   <a class="btn-subscribe" style="background:#ff0000;" href="https://m.youtube.com/@Youssef_Zeweil/shorts" target="_blank">اشترك في قناتي</a>
   <a class="btn-subscribe" style="background:#1877f2;" href="https://www.facebook.com/profile.php?id=100053479211691" target="_blank">تابعني على فيسبوك</a>
   <a class="btn-subscribe" style="background:#25D366;" href="https://wa.me/201014761698" target="_blank">راسلني على واتساب</a>
@@ -185,10 +185,26 @@
 
   <footer>© 2025 ZEWEIL GAMES</footer>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js"></script>
+
   <script>
     const playerName = localStorage.getItem("zeweil_player_name");
     const charKey = `zeweil_character_${playerName}`;
-    const selectedChar = localStorage.getItem(charKey) || "ZEWEIL BASIC";
+    const selectedChar = localStorage.getItem(charKey) || "ZEWEIL BASIC 🧍‍♂️";
+
+    // Firebase init
+    const firebaseConfig = {
+      apiKey: "AIzaSyDq3w9uMEQSfBoSuQKEtfzf-OzS8NDZjEo",
+      authDomain: "zeweil-games.firebaseapp.com",
+      projectId: "zeweil-games",
+      storageBucket: "zeweil-games.firebasestorage.app",
+      messagingSenderId: "755780457980",
+      appId: "1:755780457980:web:92e10d4560f9cbd8bc8e79"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
     if (!playerName) {
       window.location.href = "login.html";
@@ -206,9 +222,15 @@
         localStorage.setItem(lastRewardKey, today);
       }
 
+      // تحديث النقاط على الشاشة
       document.getElementById("player-points").textContent = currentPoints;
       document.getElementById("welcome-text").textContent = `مرحباً، ${playerName} (${selectedChar}) 👋`;
       document.getElementById("profile-name").textContent = playerName;
+
+      // تحديث Firebase
+      db.collection("players").doc(playerName).update({
+        points: currentPoints
+      });
     }
   </script>
 </body>
