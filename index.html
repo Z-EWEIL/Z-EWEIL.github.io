@@ -35,8 +35,7 @@
       border-radius: 12px;
     }
 
-    /* أزرار علويّة */
-    #profile-button, #leaderboard-button, #shop-button {
+    #profile-button, #shop-button, #leaderboard-button {
       position: absolute;
       top: 15px;
       padding: 8px 16px;
@@ -45,8 +44,8 @@
       font-weight: bold;
       cursor: pointer;
       text-decoration: none;
-      color: black;
       z-index: 1000;
+      color: black;
     }
 
     #profile-button {
@@ -55,7 +54,8 @@
     }
 
     #shop-button {
-      left: 120px;
+      left: 50%;
+      transform: translateX(-50%);
       background-color: #ffcc00;
     }
 
@@ -146,9 +146,70 @@
   <p>نقاطك: <span id="player-points">0</span> ⭐</p>
 
   <div class="games-container">
-    <!-- ألعاب الموقع -->
     <div class="game-card">
       <img src="venge.png" alt="Venge.io">
       <h3>Venge.io</h3>
       <a href="https://venge.io" target="_blank">العب الآن</a>
-    </
+    </div>
+
+    <div class="game-card">
+      <img src="freefire.png" alt="Free Fire">
+      <h3>Free Fire</h3>
+      <a href="https://play.google.com/store/apps/details?id=com.dts.freefireth" target="_blank">تحميل اللعبة</a>
+    </div>
+
+    <div class="game-card">
+      <img src="roblox.png" alt="Roblox">
+      <h3>Roblox</h3>
+      <a href="https://play.google.com/store/apps/details?id=com.roblox.client" target="_blank">تحميل اللعبة</a>
+    </div>
+
+    <div class="game-card">
+      <img src="conflict.png" alt="Conflict of Nations">
+      <h3>Conflict of Nations</h3>
+      <a href="https://www.conflictnations.com/" target="_blank">العب مباشرة</a>
+    </div>
+
+    <div class="game-card">
+      <img src="bloxdio.png" alt="Bloxd.io">
+      <h3>Bloxd.io</h3>
+      <a href="https://bloxd.io" target="_blank">العب مباشرة</a>
+    </div>
+  </div>
+
+  <!-- روابط التواصل -->
+  <a class="btn-subscribe" style="background:#ff0000;" href="https://m.youtube.com/@Youssef_Zeweil/shorts" target="_blank">اشترك في قناتي</a>
+  <a class="btn-subscribe" style="background:#1877f2;" href="https://www.facebook.com/profile.php?id=100053479211691" target="_blank">تابعني على فيسبوك</a>
+  <a class="btn-subscribe" style="background:#25D366;" href="https://wa.me/201014761698" target="_blank">راسلني على واتساب</a>
+  <a class="btn-subscribe" style="background:#C13584;" href="https://www.instagram.com/jo_______ahmed?igsh=MTFjajVybTkydGVuYg==" target="_blank">تابعني على إنستجرام</a>
+
+  <footer>© 2025 ZEWEIL GAMES</footer>
+
+  <script>
+    const playerName = localStorage.getItem("zeweil_player_name");
+    const charKey = `zeweil_character_${playerName}`;
+    const selectedChar = localStorage.getItem(charKey) || "ZEWEIL BASIC";
+
+    if (!playerName) {
+      window.location.href = "login.html";
+    } else {
+      const pointsKey = `zeweil_points_${playerName}`;
+      let currentPoints = parseInt(localStorage.getItem(pointsKey)) || 0;
+
+      const today = new Date().toDateString();
+      const lastRewardKey = `zeweil_last_reward_${playerName}`;
+      const lastDate = localStorage.getItem(lastRewardKey);
+
+      if (lastDate !== today) {
+        currentPoints += 5;
+        localStorage.setItem(pointsKey, currentPoints);
+        localStorage.setItem(lastRewardKey, today);
+      }
+
+      document.getElementById("player-points").textContent = currentPoints;
+      document.getElementById("welcome-text").textContent = `مرحباً، ${playerName} (${selectedChar}) 👋`;
+      document.getElementById("profile-name").textContent = playerName;
+    }
+  </script>
+</body>
+</html>
