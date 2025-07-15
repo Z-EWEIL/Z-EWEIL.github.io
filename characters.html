@@ -116,11 +116,10 @@
     ];
 
     const container = document.getElementById("characters-container");
-
     const secretCode = "XP2025";
 
     characters.forEach(char => {
-      // لو سرية ومافيش كود صح، ماتظهرش
+      // إذا كانت سرية ولم يتم فتحها، لا تظهر
       if (char.secret && localStorage.getItem("zeweil_secret_unlocked") !== "true") return;
 
       const card = document.createElement("div");
@@ -148,7 +147,7 @@
           const input = prompt("أدخل الكود السري لفتح الشخصية:");
           if (input === secretCode) {
             localStorage.setItem("zeweil_secret_unlocked", "true");
-            alert("تم فتح الشخصية السرية! أعد تحميل الصفحة.");
+            alert("✅ تم فتح الشخصية السرية! أعد تحميل الصفحة.");
             location.reload();
           } else {
             alert("❌ الكود غير صحيح.");
@@ -159,7 +158,7 @@
           button.textContent = "اختر الشخصية";
           button.onclick = () => {
             localStorage.setItem(selectedCharKey, char.name);
-            alert(`تم اختيار ${char.name} بنجاح!`);
+            alert(`✅ تم اختيار ${char.name} بنجاح!`);
           };
         } else {
           button.disabled = true;
