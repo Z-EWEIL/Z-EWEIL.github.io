@@ -111,18 +111,18 @@
     const charKey = `zeweil_character_${playerName}`;
     const secretCharKey = `zeweil_secret_unlocked_${playerName}`;
 
-    // بيانات الشخصيات (نفسها في المتجر)
+    // بيانات الشخصيات بصور بدون "char_"
     const characters = [
-      { name: "ZEWEIL BASIC", img: "char_basic.png" },
-      { name: "SHADOW ZEWEIL", img: "char_shadow.png" },
-      { name: "GOLDEN ZEWEIL", img: "char_golden.png" },
-      { name: "CYBER ZEWEIL", img: "char_cyber.png" },
-      { name: "PHARAOH ZEWEIL", img: "char_pharaoh.png" }
+      { name: "ZEWEIL BASIC", img: "basic.png" },
+      { name: "SHADOW ZEWEIL", img: "shadow.png" },
+      { name: "GOLDEN ZEWEIL", img: "golden.png" },
+      { name: "CYBER ZEWEIL", img: "cyber.png" },
+      { name: "PHARAOH ZEWEIL", img: "pharaoh.png" }
     ];
 
-    // أضف الشخصية الغامضة إذا مفعلة
+    // أضف الشخصية الغامضة إذا كانت مفعّلة
     if (localStorage.getItem(secretCharKey) === "true") {
-      characters.push({ name: "؟؟؟", img: "char_secret.png" });
+      characters.push({ name: "؟؟؟", img: "mysterious.png" });
     }
 
     let selectedChar = localStorage.getItem(charKey) || "ZEWEIL BASIC";
@@ -134,18 +134,15 @@
 
       characters.forEach(char => {
         const ownedKey = `zeweil_owned_${playerName}_${char.name}`;
-        // الشخصية مملوكة لو مجانية أو اشتريت أو هي الشخصية الغامضة المفتوحة
-        let owned = localStorage.getItem(ownedKey) === "true" || char.name === "ZEWEIL BASIC" || char.name === "؟؟؟" && localStorage.getItem(secretCharKey) === "true";
+        const owned = localStorage.getItem(ownedKey) === "true" ||
+                      char.name === "ZEWEIL BASIC" ||
+                      (char.name === "؟؟؟" && localStorage.getItem(secretCharKey) === "true");
 
-        // في البروفايل نعرض فقط الشخصيات المملوكة
         if (!owned) return;
 
         const card = document.createElement("div");
         card.className = "character-card";
-
-        if (selectedChar === char.name) {
-          card.classList.add("selected");
-        }
+        if (selectedChar === char.name) card.classList.add("selected");
 
         card.innerHTML = `
           <img src="${char.img}" alt="${char.name}">
