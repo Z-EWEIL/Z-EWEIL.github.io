@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>لوحة التحكم الإدارية - ZEWEIL GAMES</title>
+  <style>
+    body {
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    #loginBox {
+      margin-top: 100px;
+    }
+    input {
+      padding: 10px;
+      margin: 10px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #28a745;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    #dashboard {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="loginBox">
+    <h2>تسجيل دخول الإدارة</h2>
+    <input type="password" id="password" placeholder="ادخل كلمة المرور">
+    <br>
+    <button onclick="login()">دخول</button>
+  </div>
+
+  <div id="dashboard">
+    <h1>مرحبًا بك في لوحة التحكم الإدارية</h1>
+    <p>هنا تقدر تتحكم في الموقع: تعديل النقاط، فتح الشخصيات، مراقبة اللاعبين، إضافة إعلانات.. إلخ (قريبًا)</p>
+  </div>
+
+  <script>
+    const correctPassword = "zeweil admin";
+
+    function login() {
+      const entered = document.getElementById("password").value;
+      if (entered === correctPassword) {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+      } else {
+        alert("كلمة المرور غير صحيحة!");
+      }
+    }
+  </script>
+</body>
+</html>
