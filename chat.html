@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8">
-  <title>ZEWEIL Chat</title>
+  <title>ZEWEIL Private Chat</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
@@ -13,6 +13,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      padding: 20px;
     }
     #chat-box {
       width: 90%;
@@ -31,6 +32,7 @@
       padding: 10px;
       border: none;
       border-radius: 5px;
+      margin: 5px;
     }
     input {
       width: 70%;
@@ -44,12 +46,12 @@
 </head>
 <body>
 
-  <h1>💬 ZEWEIL Chat</h1>
+  <h1>🔒 دردشة ZEWEIL الخاصة</h1>
 
+  <input type="text" id="roomCode" placeholder="ادخل كود الغرفة">
+  <input type="text" id="username" placeholder="اسمك">
+  <br>
   <div id="chat-box"></div>
-
-  <input type="text" id="username" placeholder="اسمك (مره واحدة)">
-  <br><br>
   <input type="text" id="message" placeholder="اكتب رسالتك">
   <button onclick="sendMessage()">إرسال</button>
 
@@ -64,12 +66,13 @@
     const chatBox = document.getElementById("chat-box");
 
     function sendMessage() {
-      const name = document.getElementById("username").value;
-      const msg = document.getElementById("message").value;
+      const room = document.getElementById("roomCode").value.trim();
+      const name = document.getElementById("username").value.trim();
+      const msg = document.getElementById("message").value.trim();
 
-      if (name.trim() === "" || msg.trim() === "") return;
+      if (!room || !name || !msg) return;
 
-      db.ref("messages").push({
+      db.ref(`rooms/${room}`).push({
         name: name,
         message: msg,
         time: new Date().toLocaleTimeString()
@@ -78,12 +81,21 @@
       document.getElementById("message").value = "";
     }
 
-    db.ref("messages").on("child_added", (snapshot) => {
-      const data = snapshot.val();
-      const msgDiv = document.createElement("div");
-      msgDiv.textContent = `🗨️ ${data.name}: ${data.message} (${data.time})`;
-      chatBox.appendChild(msgDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
+    // متابعة الرسائل
+    document.getElementById("roomCode").addEventListener("input", function () {
+      chatBox.innerHTML = "";
+      const room = this.value.trim();
+      if (!room) return;
+
+      db.ref(`rooms/${room}`).off(); // افصل أي غرفة سابقة
+
+      db.ref(`rooms/${room}`).on("child_added", (snapshot) => {
+        const data = snapshot.val();
+        const msgDiv = document.createElement("div");
+        msgDiv.textContent = `💬 ${data.name}: ${data.message} (${data.time})`;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      });
     });
   </script>
 </body>
