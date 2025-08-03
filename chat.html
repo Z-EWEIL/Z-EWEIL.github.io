@@ -9,7 +9,7 @@
     body {
       background-color: #111;
       color: white;
-      font-family: Tahoma, sans-serif;
+      font-family: Tahoma;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -19,11 +19,11 @@
       width: 90%;
       max-width: 600px;
       height: 400px;
-      overflow-y: scroll;
+      overflow-y: auto;
       background: #222;
       border-radius: 10px;
       padding: 10px;
-      margin-bottom: 10px;
+      margin: 15px 0;
     }
     #chat-box div {
       margin-bottom: 8px;
@@ -35,7 +35,11 @@
       margin: 5px;
     }
     input {
-      width: 70%;
+      width: 65%;
+    }
+    #room {
+      width: 200px;
+      margin-bottom: 10px;
     }
     button {
       background-color: #0f0;
@@ -46,33 +50,28 @@
 </head>
 <body>
 
-  <h1>🔒 دردشة ZEWEIL الخاصة</h1>
-
-  <input type="text" id="roomCode" placeholder="ادخل كود الغرفة">
-  <input type="text" id="username" placeholder="اسمك">
-  <br>
+  <h2>🔒 دردشة ZEWEIL الخاصة</h2>
+  <input type="text" id="room" placeholder="🛡️ كود الغرفة">
+  <input type="text" id="username" placeholder="🧑‍💬 اسمك">
   <div id="chat-box"></div>
-  <input type="text" id="message" placeholder="اكتب رسالتك">
+  <input type="text" id="message" placeholder="💬 رسالتك">
   <button onclick="sendMessage()">إرسال</button>
 
   <script>
-    // إعداد Firebase
     const firebaseConfig = {
       databaseURL: "https://zeweil-chat-default-rtdb.europe-west1.firebasedatabase.app/"
     };
     firebase.initializeApp(firebaseConfig);
-
     const db = firebase.database();
-    const chatBox = document.getElementById("chat-box");
 
     function sendMessage() {
-      const room = document.getElementById("roomCode").value.trim();
+      const room = document.getElementById("room").value.trim();
       const name = document.getElementById("username").value.trim();
       const msg = document.getElementById("message").value.trim();
 
       if (!room || !name || !msg) return;
 
-      db.ref(`rooms/${room}`).push({
+      db.ref("rooms/" + room).push({
         name: name,
         message: msg,
         time: new Date().toLocaleTimeString()
@@ -81,21 +80,20 @@
       document.getElementById("message").value = "";
     }
 
-    // متابعة الرسائل
-    document.getElementById("roomCode").addEventListener("input", function () {
+    document.getElementById("room").addEventListener("input", () => {
+      const room = document.getElementById("room").value.trim();
+      const chatBox = document.getElementById("chat-box");
       chatBox.innerHTML = "";
-      const room = this.value.trim();
-      if (!room) return;
 
-      db.ref(`rooms/${room}`).off(); // افصل أي غرفة سابقة
-
-      db.ref(`rooms/${room}`).on("child_added", (snapshot) => {
-        const data = snapshot.val();
-        const msgDiv = document.createElement("div");
-        msgDiv.textContent = `💬 ${data.name}: ${data.message} (${data.time})`;
-        chatBox.appendChild(msgDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
-      });
+      if (room) {
+        db.ref("rooms/" + room).on("child_added", (snapshot) => {
+          const data = snapshot.val();
+          const msgDiv = document.createElement("div");
+          msgDiv.textContent = `🗨️ ${data.name}: ${data.message} (${data.time})`;
+          chatBox.appendChild(msgDiv);
+          chatBox.scrollTop = chatBox.scrollHeight;
+        });
+      }
     });
   </script>
 </body>
