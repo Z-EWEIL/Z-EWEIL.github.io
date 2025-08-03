@@ -1,94 +1,87 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>دردشة ZEWEIL</title>
+  <meta charset="UTF-8">
+  <title>ZEWEIL Chat</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
     body {
-      background-color: #0a0a0a;
+      background-color: #111;
       color: white;
-      font-family: 'Cairo', sans-serif;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #FFD700;
+      font-family: Tahoma, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     #chat-box {
+      width: 90%;
+      max-width: 600px;
       height: 400px;
       overflow-y: scroll;
-      border: 1px solid #444;
-      padding: 10px;
-      background-color: #111;
-      margin-bottom: 10px;
-      border-radius: 10px;
-    }
-    .msg {
-      margin: 5px 0;
-      padding: 5px 10px;
       background: #222;
-      border-radius: 5px;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    #chat-box div {
+      margin-bottom: 8px;
     }
     input, button {
       padding: 10px;
       border: none;
       border-radius: 5px;
     }
-    #msg-input {
-      width: 75%;
+    input {
+      width: 70%;
     }
-    #send-btn {
-      width: 20%;
-      background-color: #FFD700;
+    button {
+      background-color: #0f0;
       color: black;
-      font-weight: bold;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <h1>💬 دردشة ZEWEIL</h1>
+  <h1>💬 ZEWEIL Chat</h1>
+
   <div id="chat-box"></div>
 
-  <input type="text" id="msg-input" placeholder="اكتب رسالتك هنا..." />
-  <button id="send-btn">إرسال</button>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <input type="text" id="username" placeholder="اسمك (مره واحدة)">
+  <br><br>
+  <input type="text" id="message" placeholder="اكتب رسالتك">
+  <button onclick="sendMessage()">إرسال</button>
 
   <script>
-    // إعداد Firebase - عدل البيانات حسب مشروعك لو اختلف
+    // إعداد Firebase
     const firebaseConfig = {
       databaseURL: "https://zeweil-chat-default-rtdb.europe-west1.firebasedatabase.app/"
     };
-
     firebase.initializeApp(firebaseConfig);
+
     const db = firebase.database();
-
     const chatBox = document.getElementById("chat-box");
-    const msgInput = document.getElementById("msg-input");
-    const sendBtn = document.getElementById("send-btn");
 
-    // إرسال رسالة
-    sendBtn.onclick = () => {
-      const msg = msgInput.value.trim();
-      if (msg) {
-        db.ref("messages").push().set({
-          text: msg,
-          time: Date.now()
-        });
-        msgInput.value = "";
-      }
-    };
+    function sendMessage() {
+      const name = document.getElementById("username").value;
+      const msg = document.getElementById("message").value;
 
-    // استقبال الرسائل
+      if (name.trim() === "" || msg.trim() === "") return;
+
+      db.ref("messages").push({
+        name: name,
+        message: msg,
+        time: new Date().toLocaleTimeString()
+      });
+
+      document.getElementById("message").value = "";
+    }
+
     db.ref("messages").on("child_added", (snapshot) => {
       const data = snapshot.val();
       const msgDiv = document.createElement("div");
-      msgDiv.className = "msg";
-      msgDiv.textContent = data.text;
+      msgDiv.textContent = `🗨️ ${data.name}: ${data.message} (${data.time})`;
       chatBox.appendChild(msgDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
     });
