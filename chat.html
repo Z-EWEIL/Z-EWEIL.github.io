@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>دردشة ZEWEIL</title>
+  <style>
+    body {
+      background-color: #0a0a0a;
+      color: white;
+      font-family: 'Cairo', sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #FFD700;
+    }
+    #chat-box {
+      height: 400px;
+      overflow-y: scroll;
+      border: 1px solid #444;
+      padding: 10px;
+      background-color: #111;
+      margin-bottom: 10px;
+      border-radius: 10px;
+    }
+    .msg {
+      margin: 5px 0;
+      padding: 5px 10px;
+      background: #222;
+      border-radius: 5px;
+    }
+    input, button {
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+    }
+    #msg-input {
+      width: 75%;
+    }
+    #send-btn {
+      width: 20%;
+      background-color: #FFD700;
+      color: black;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>💬 دردشة ZEWEIL</h1>
+  <div id="chat-box"></div>
+
+  <input type="text" id="msg-input" placeholder="اكتب رسالتك هنا..." />
+  <button id="send-btn">إرسال</button>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script>
+    // إعداد Firebase - عدل البيانات حسب مشروعك لو اختلف
+    const firebaseConfig = {
+      databaseURL: "https://zeweil-chat-default-rtdb.europe-west1.firebasedatabase.app/"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const chatBox = document.getElementById("chat-box");
+    const msgInput = document.getElementById("msg-input");
+    const sendBtn = document.getElementById("send-btn");
+
+    // إرسال رسالة
+    sendBtn.onclick = () => {
+      const msg = msgInput.value.trim();
+      if (msg) {
+        db.ref("messages").push().set({
+          text: msg,
+          time: Date.now()
+        });
+        msgInput.value = "";
+      }
+    };
+
+    // استقبال الرسائل
+    db.ref("messages").on("child_added", (snapshot) => {
+      const data = snapshot.val();
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "msg";
+      msgDiv.textContent = data.text;
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+  </script>
+</body>
+</html>
