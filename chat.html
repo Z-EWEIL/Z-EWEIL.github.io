@@ -57,12 +57,18 @@
   <input type="text" id="message" placeholder="💬 رسالتك">
   <button onclick="sendMessage()">إرسال</button>
 
+  <!-- صوت التنبيه -->
+  <audio id="notification-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_84b2f2354f.mp3?filename=notification-1-126507.mp3" preload="auto"></audio>
+
   <script>
     const firebaseConfig = {
       databaseURL: "https://zeweil-chat-default-rtdb.europe-west1.firebasedatabase.app/"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
+    let currentRoom = "";
+    let lastMessageKey = "";
 
     function sendMessage() {
       const room = document.getElementById("room").value.trim();
@@ -84,14 +90,23 @@
       const room = document.getElementById("room").value.trim();
       const chatBox = document.getElementById("chat-box");
       chatBox.innerHTML = "";
+      currentRoom = room;
 
       if (room) {
+        db.ref("rooms/" + room).off(); // فك الاشتراك لو فيه غيره
+
         db.ref("rooms/" + room).on("child_added", (snapshot) => {
           const data = snapshot.val();
           const msgDiv = document.createElement("div");
           msgDiv.textContent = `🗨️ ${data.name}: ${data.message} (${data.time})`;
           chatBox.appendChild(msgDiv);
           chatBox.scrollTop = chatBox.scrollHeight;
+
+          // تشغيل الصوت لو الرسالة مش من المستخدم نفسه
+          const username = document.getElementById("username").value.trim();
+          if (data.name !== username) {
+            document.getElementById("notification-sound").play();
+          }
         });
       }
     });
