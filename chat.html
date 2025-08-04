@@ -1,12 +1,10 @@
-<!DOCTYPE html>
-<html lang="ar">
+<!DOCTYPE html><html lang="ar">
 <head>
   <meta charset="UTF-8">
   <title>ZEWEIL Private Chat</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
-    /* نفس التنسيقات بتاعتك */
     body { background-color: #111; color: white; font-family: Tahoma; display: flex; flex-direction: column; align-items: center; padding: 20px; }
     h2 { color: #0f0; margin-bottom: 10px; }
     #chat-box { width: 90%; max-width: 600px; height: 400px; overflow-y: auto; background: #1a1a1a; border-radius: 10px; padding: 15px; margin: 15px 0; display: flex; flex-direction: column; }
@@ -26,6 +24,7 @@
     .reaction { font-size: 14px; background: #444; padding: 2px 6px; border-radius: 10px; }
     #onlineToggle { position: absolute; left: 15px; top: 15px; background: #0f0; color: #000; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     #onlineList { position: absolute; left: 15px; top: 65px; background: #222; color: white; padding: 10px; border-radius: 8px; display: none; max-height: 300px; overflow-y: auto; min-width: 200px; }
+    #settings { margin-top: 10px; background: #1a1a1a; padding: 10px; border-radius: 10px; display: none; }
   </style>
 </head>
 <body>
@@ -40,8 +39,12 @@
   <button onclick="sendMessage()">إرسال</button>
   <button onclick="startCall()">📹 مكالمة فيديو</button>
   <button onclick="startVoiceCall()">📞 مكالمة صوتية</button>
-
-  <script>
+  <button onclick="toggleSettings()">⚙️ إعدادات</button>  <div id="settings">
+    <h3>🛠️ إعدادات الحساب</h3>
+    <input type="text" id="newName" placeholder="✏️ اسم جديد">
+    <button onclick="requestNameChange()">طلب تغيير الاسم</button>
+    <p id="status"></p>
+  </div>  <script>
     const firebaseConfig = {
       databaseURL: "https://zeweil-chat-default-rtdb.europe-west1.firebasedatabase.app/"
     };
@@ -49,9 +52,28 @@
     const db = firebase.database();
 
     let currentRoom = "";
-    let currentUser = "";
+    let currentUser = localStorage.getItem("userName") || "";
     const userId = Date.now();
     let userRef = null;
+
+    if (currentUser) document.getElementById("username").value = currentUser;
+
+    function toggleSettings() {
+      const panel = document.getElementById("settings");
+      panel.style.display = panel.style.display === "none" ? "block" : "none";
+    }
+
+    function requestNameChange() {
+      const newName = document.getElementById("newName").value.trim();
+      if (!newName) return;
+      db.ref("nameChangeRequests").push({
+        oldName: currentUser,
+        newName,
+        time: Date.now(),
+        room: currentRoom
+      });
+      document.getElementById("status").innerText = "✅ تم إرسال الطلب للإدارة.";
+    }
 
     document.getElementById("onlineToggle").onclick = () => {
       const list = document.getElementById("onlineList");
@@ -98,7 +120,6 @@
       db.ref("rooms/" + room + "/messages").on("child_added", (snapshot) => {
         const data = snapshot.val();
         const key = snapshot.key;
-
         const msgDiv = document.createElement("div");
         msgDiv.classList.add("message");
 
@@ -110,28 +131,8 @@
           return;
         }
 
-        msgDiv.ondblclick = () => showEmojiPicker(msgDiv, key);
         msgDiv.classList.add(data.name === currentUser ? "my-message" : "other-message");
-
-        const reactionsDiv = document.createElement("div");
-        reactionsDiv.className = "reactions";
-        if (data.reactions) {
-          Object.entries(data.reactions).forEach(([emoji, users]) => {
-            if (users.length > 0) {
-              const r = document.createElement("div");
-              r.className = "reaction";
-              r.textContent = `${emoji} ${users.length}`;
-              reactionsDiv.appendChild(r);
-            }
-          });
-        }
-
-        msgDiv.innerHTML = `
-          <div class="sender">${data.name}</div>
-          ${data.message}
-          <div class="time">${data.time}</div>
-        `;
-        msgDiv.appendChild(reactionsDiv);
+        msgDiv.innerHTML = `<div class="sender">${data.name}</div>${data.message}<div class="time">${data.time}</div>`;
         document.getElementById("chat-box").appendChild(msgDiv);
         document.getElementById("chat-box").scrollTop = document.getElementById("chat-box").scrollHeight;
       });
@@ -164,36 +165,6 @@
       });
     }
 
-    function addReaction(msgKey, emoji) {
-      const ref = db.ref(`rooms/${currentRoom}/messages/${msgKey}/reactions/${emoji}`);
-      ref.once("value", snapshot => {
-        const users = snapshot.val() || [];
-        if (users.includes(currentUser)) {
-          ref.set(users.filter(u => u !== currentUser));
-        } else {
-          ref.set([...users, currentUser]);
-        }
-      });
-    }
-
-    function showEmojiPicker(target, msgKey) {
-      let picker = document.createElement("div");
-      picker.className = "emoji-picker";
-      ["❤️", "😂", "👍", "👎", "😮", "😢"].forEach(e => {
-        let span = document.createElement("span");
-        span.textContent = e;
-        span.onclick = () => {
-          addReaction(msgKey, e);
-          document.body.removeChild(picker);
-        };
-        picker.appendChild(span);
-      });
-      document.body.appendChild(picker);
-      picker.style.left = target.getBoundingClientRect().left + "px";
-      picker.style.top = (target.getBoundingClientRect().top - 40) + "px";
-      picker.style.display = "block";
-    }
-
     function startCall() {
       const room = document.getElementById("room").value.trim();
       if (room) window.open("https://meet.jit.si/" + room, "_blank");
@@ -217,6 +188,5 @@
         userRef.update({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
       }
     });
-  </script>
-</body>
+  </script></body>
 </html>
