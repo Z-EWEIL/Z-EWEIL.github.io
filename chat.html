@@ -99,15 +99,15 @@
   <input type="text" id="message" placeholder="💬 رسالتك">
   <button onclick="sendMessage()">إرسال</button>
   <button onclick="startCall()">📹 مكالمة فيديو</button>
+  <button onclick="startVoiceCall()">📞 مكالمة صوتية</button>
   <script>
     const firebaseConfig = {
       databaseURL: "https://zeweil-chat-default-rtdb.europe-west1.firebasedatabase.app/"
     };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();let currentRoom = "";
-let currentUser = "";
-
-function sendMessage() {
+    const db = firebase.database();
+    let currentRoom = "";
+    let currentUser = "";function sendMessage() {
   const room = document.getElementById("room").value.trim();
   const name = document.getElementById("username").value.trim();
   const msg = document.getElementById("message").value.trim();
@@ -140,6 +140,16 @@ function startCall() {
   if (room) {
     alert("🔔 لو بتستخدم موبايل:\n\n1. دوس على الثلاث نقط اللي فوق في المتصفح.\n2. فعل اختيار (موقع سطح المكتب) ✅.\n3. بعد كده الصفحة هتشتغل والمكالمة هتبدأ عادي.");
     window.open("https://meet.jit.si/" + room, "_blank");
+  } else {
+    alert("❗ لازم تدخل كود الغرفة الأول.");
+  }
+}
+
+function startVoiceCall() {
+  const room = document.getElementById("room").value.trim();
+  if (room) {
+    alert("🔔 لو بتستخدم موبايل:\n\n1. دوس على الثلاث نقط اللي فوق في المتصفح.\n2. فعل اختيار (موقع سطح المكتب) ✅.\n3. بعد كده الصفحة هتشتغل والمكالمة الصوتية هتبدأ عادي.");
+    window.open("https://meet.jit.si/" + room + "-voice", "_blank");
   } else {
     alert("❗ لازم تدخل كود الغرفة الأول.");
   }
