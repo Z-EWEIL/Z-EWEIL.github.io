@@ -1,192 +1,157 @@
-<!DOCTYPE html><html lang="ar">
+<!DOCTYPE html>
+<html lang="ar">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>ZEWEIL Private Chat</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: white;
+      margin: 0;
+      padding: 0;
+    }
+    #chat {
+      height: 400px;
+      overflow-y: scroll;
+      border: 1px solid #333;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px;
+    }
+    .hidden {
+      display: none;
+    }
+    .settings-panel {
+      background: #222;
+      padding: 15px;
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 1px solid #555;
+      display: none;
+    }
+  </style>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <style>
-    body { background-color: #111; color: white; font-family: Tahoma; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-    h2 { color: #0f0; margin-bottom: 10px; }
-    #chat-box { width: 90%; max-width: 600px; height: 400px; overflow-y: auto; background: #1a1a1a; border-radius: 10px; padding: 15px; margin: 15px 0; display: flex; flex-direction: column; }
-    .message { max-width: 80%; padding: 10px 15px; margin: 8px 0; border-radius: 15px; position: relative; word-wrap: break-word; line-height: 1.4; }
-    .my-message { background-color: #0f0; color: #000; align-self: flex-end; border-bottom-right-radius: 0; }
-    .other-message { background-color: #333; color: #fff; align-self: flex-start; border-bottom-left-radius: 0; }
-    .sender { font-weight: bold; font-size: 0.85em; }
-    .time { font-size: 0.75em; opacity: 0.7; margin-top: 4px; text-align: right; }
-    .system-message { color: #888; font-style: italic; text-align: center; }
-    input, button { padding: 10px; border: none; border-radius: 5px; margin: 5px; }
-    input { width: 60%; }
-    #room { width: 200px; margin-bottom: 10px; }
-    button { background-color: #0f0; color: black; cursor: pointer; }
-    .emoji-picker { display: none; background: #222; border: 1px solid #333; border-radius: 8px; position: absolute; bottom: 35px; padding: 6px; }
-    .emoji-picker span { font-size: 20px; cursor: pointer; margin: 3px; }
-    .reactions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
-    .reaction { font-size: 14px; background: #444; padding: 2px 6px; border-radius: 10px; }
-    #onlineToggle { position: absolute; left: 15px; top: 15px; background: #0f0; color: #000; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    #onlineList { position: absolute; left: 15px; top: 65px; background: #222; color: white; padding: 10px; border-radius: 8px; display: none; max-height: 300px; overflow-y: auto; min-width: 200px; }
-    #settings { margin-top: 10px; background: #1a1a1a; padding: 10px; border-radius: 10px; display: none; }
-  </style>
 </head>
 <body>
-  <div id="onlineToggle">👥</div>
-  <div id="onlineList"></div>
-  <h2>🔐 دردشة ZEWEIL الخاصة</h2>
-  <input type="text" id="room" placeholder="🛡️ كود الغرفة">
-  <input type="text" id="username" placeholder="🡩‍💬 اسمك">
-  <button onclick="joinRoom()">انضم</button>
-  <div id="chat-box"></div>
-  <input type="text" id="message" placeholder="💬 رسالتك">
-  <button onclick="sendMessage()">إرسال</button>
-  <button onclick="startCall()">📹 مكالمة فيديو</button>
-  <button onclick="startVoiceCall()">📞 مكالمة صوتية</button>
-  <button onclick="toggleSettings()">⚙️ إعدادات</button>  <div id="settings">
-    <h3>🛠️ إعدادات الحساب</h3>
-    <input type="text" id="newName" placeholder="✏️ اسم جديد">
-    <button onclick="requestNameChange()">طلب تغيير الاسم</button>
-    <p id="status"></p>
-  </div>  <script>
-    const firebaseConfig = {
-      databaseURL: "https://zeweil-chat-default-rtdb.europe-west1.firebasedatabase.app/"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
 
-    let currentRoom = "";
-    let currentUser = localStorage.getItem("userName") || "";
-    const userId = Date.now();
-    let userRef = null;
+<h2>ZEWEIL Private Chat</h2>
+<div id="chat"></div>
 
-    if (currentUser) document.getElementById("username").value = currentUser;
+<input type="text" id="messageInput" placeholder="اكتب رسالتك...">
+<button onclick="sendMessage()">إرسال</button>
+<span id="typingStatus"></span>
+<br>
 
-    function toggleSettings() {
-      const panel = document.getElementById("settings");
-      panel.style.display = panel.style.display === "none" ? "block" : "none";
-    }
+<button onclick="toggleSettings()">⚙️ إعدادات</button>
+<button id="reviewBtn" onclick="checkReview()" class="hidden">لوحة المراجعة</button>
 
-    function requestNameChange() {
-      const newName = document.getElementById("newName").value.trim();
-      if (!newName) return;
-      db.ref("nameChangeRequests").push({
-        oldName: currentUser,
-        newName,
-        time: Date.now(),
-        room: currentRoom
+<div class="settings-panel" id="settingsPanel">
+  <h3>إعدادات الحساب</h3>
+  <p>اسم المستخدم الحالي: <span id="currentName"></span></p>
+  <input type="text" id="newName" placeholder="اسم جديد">
+  <button onclick="requestNameChange()">طلب تغيير الاسم</button>
+  <button onclick="closeSettings()">إغلاق</button>
+</div>
+
+<script>
+  const firebaseConfig = {
+    // بيانات Firebase هنا
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const room = "room1";
+
+  let username = localStorage.getItem("username");
+  if (!username) {
+    username = prompt("ادخل اسمك:");
+    localStorage.setItem("username", username);
+    db.ref(`rooms/${room}/users/${username}`).set({ online: true, lastSeen: Date.now() });
+    db.ref(`rooms/${room}/messages`).push({ text: `لقد انضم ${username} إلى الغرفة`, sender: "System", time: Date.now() });
+  } else {
+    db.ref(`rooms/${room}/users/${username}`).set({ online: true, lastSeen: Date.now() });
+  }
+
+  document.getElementById("currentName").innerText = username;
+
+  function sendMessage() {
+    const text = document.getElementById("messageInput").value;
+    db.ref(`rooms/${room}/messages`).push({ text, sender: username, time: Date.now() });
+    document.getElementById("messageInput").value = "";
+  }
+
+  // عرض الرسائل
+  db.ref(`rooms/${room}/messages`).on("child_added", (snapshot) => {
+    const msg = snapshot.val();
+    const div = document.createElement("div");
+    div.textContent = `${msg.sender}: ${msg.text}`;
+    document.getElementById("chat").appendChild(div);
+    document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
+  });
+
+  // تحديث "يكتب الآن"
+  let typingTimeout;
+  document.getElementById("messageInput").addEventListener("input", () => {
+    db.ref(`rooms/${room}/typing/${username}`).set(true);
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+      db.ref(`rooms/${room}/typing/${username}`).remove();
+    }, 2000);
+  });
+
+  db.ref(`rooms/${room}/typing`).on("value", (snapshot) => {
+    const data = snapshot.val() || {};
+    const typingUsers = Object.keys(data).filter(name => name !== username);
+    document.getElementById("typingStatus").innerText = typingUsers.length ? `${typingUsers.join(", ")} بيكتب...` : "";
+  });
+
+  // زر الإعدادات
+  function toggleSettings() {
+    document.getElementById("settingsPanel").style.display = "block";
+  }
+  function closeSettings() {
+    document.getElementById("settingsPanel").style.display = "none";
+  }
+
+  // طلب تغيير الاسم
+  function requestNameChange() {
+    const newName = document.getElementById("newName").value;
+    if (newName && newName !== username) {
+      db.ref(`name_change_requests/${username}`).set({
+        from: username,
+        to: newName,
+        status: "pending",
+        time: Date.now()
       });
-      document.getElementById("status").innerText = "✅ تم إرسال الطلب للإدارة.";
+      alert("تم إرسال طلب تغيير الاسم إلى الأدمن.");
     }
+  }
 
-    document.getElementById("onlineToggle").onclick = () => {
-      const list = document.getElementById("onlineList");
-      list.style.display = list.style.display === "block" ? "none" : "block";
-    };
-
-    function sendMessage() {
-      const msg = document.getElementById("message").value.trim();
-      if (!currentRoom || !currentUser || !msg) return;
-      db.ref("rooms/" + currentRoom + "/messages").push({
-        name: currentUser,
-        message: msg,
-        time: new Date().toLocaleTimeString(),
-        reactions: {}
-      });
-      document.getElementById("message").value = "";
-    }
-
-    function joinRoom() {
-      const room = document.getElementById("room").value.trim();
-      const name = document.getElementById("username").value.trim();
-      if (!room || !name) return;
-
-      currentRoom = room;
-      currentUser = name;
-      userRef = db.ref(`rooms/${room}/users/${userId}`);
-      const now = Date.now();
-      userRef.set({ name: currentUser, online: true, lastSeen: now });
-      userRef.onDisconnect().update({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
-
-      localStorage.setItem("roomCode", currentRoom);
-      localStorage.setItem("userName", currentUser);
-
-      document.getElementById("chat-box").innerHTML = "";
-      db.ref("rooms/" + room + "/messages").off();
-
-      db.ref("rooms/" + room + "/messages").push({
-        name: "🚪 النظام",
-        message: `📢 لقد انضم ${name}`,
-        time: new Date().toLocaleTimeString(),
-        system: true
-      });
-
-      db.ref("rooms/" + room + "/messages").on("child_added", (snapshot) => {
-        const data = snapshot.val();
-        const key = snapshot.key;
-        const msgDiv = document.createElement("div");
-        msgDiv.classList.add("message");
-
-        if (data.system) {
-          msgDiv.classList.add("system-message");
-          msgDiv.textContent = data.message;
-          document.getElementById("chat-box").appendChild(msgDiv);
-          document.getElementById("chat-box").scrollTop = document.getElementById("chat-box").scrollHeight;
-          return;
-        }
-
-        msgDiv.classList.add(data.name === currentUser ? "my-message" : "other-message");
-        msgDiv.innerHTML = `<div class="sender">${data.name}</div>${data.message}<div class="time">${data.time}</div>`;
-        document.getElementById("chat-box").appendChild(msgDiv);
-        document.getElementById("chat-box").scrollTop = document.getElementById("chat-box").scrollHeight;
-      });
-
-      db.ref(`rooms/${room}/users`).on("value", (snapshot) => {
-        const list = document.getElementById("onlineList");
-        list.innerHTML = "<strong>👥 الأعضاء:</strong><br><br>";
-        snapshot.forEach(child => {
-          const user = child.val();
-          const name = user.name || "مجهول";
-          const online = user.online;
-          const lastSeen = user.lastSeen || 0;
-
-          let line = `• ${name} `;
-          if (online) {
-            line += "🟢";
-          } else {
-            const diff = Date.now() - lastSeen;
-            const minutes = Math.floor(diff / 60000);
-            if (minutes < 1) line += "⭕ منذ لحظات";
-            else if (minutes < 60) line += `⭕ منذ ${minutes} دقيقة`;
-            else {
-              const hours = Math.floor(minutes / 60);
-              line += `⭕ منذ ${hours} ساعة`;
-            }
-          }
-
-          list.innerHTML += `${line}<br>`;
-        });
-      });
-    }
-
-    function startCall() {
-      const room = document.getElementById("room").value.trim();
-      if (room) window.open("https://meet.jit.si/" + room, "_blank");
-    }
-
-    function startVoiceCall() {
-      const room = document.getElementById("room").value.trim();
-      if (room) window.open("https://meet.jit.si/" + room + "-voice", "_blank");
-    }
-
-    window.addEventListener('beforeunload', function () {
-      const roomCode = localStorage.getItem('roomCode');
-      const userName = localStorage.getItem('userName');
-      if (roomCode && userName && userRef) {
-        db.ref("rooms/" + roomCode + "/messages").push({
-          name: "🚪 النظام",
-          message: `🚪 لقد غادر ${userName}`,
-          time: new Date().toLocaleTimeString(),
-          system: true
-        });
-        userRef.update({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
+  // زر لوحة المراجعة السري
+  document.addEventListener("keydown", function(e) {
+    if (e.ctrlKey && e.key === "x") {
+      const pass = prompt("ادخل كلمة مرور الأدمن:");
+      if (pass === "zeweil admin") {
+        document.getElementById("reviewBtn").classList.remove("hidden");
       }
-    });
-  </script></body>
+    }
+  });
+
+  function checkReview() {
+    window.location.href = "review_panel.html";
+  }
+
+  // آخر ظهور
+  window.addEventListener("beforeunload", () => {
+    db.ref(`rooms/${room}/users/${username}`).update({ online: false, lastSeen: Date.now() });
+  });
+</script>
+
+</body>
 </html>
