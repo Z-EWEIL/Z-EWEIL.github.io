@@ -25,25 +25,8 @@
       padding: 10px;
       margin: 15px 0;
     }
-    .msg {
+    #chat-box div {
       margin-bottom: 8px;
-      background: #333;
-      padding: 8px;
-      border-radius: 5px;
-      position: relative;
-    }
-    .reaction {
-      margin-top: 5px;
-      font-size: 16px;
-    }
-    .react-btn {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background: transparent;
-      border: none;
-      color: #0f0;
-      cursor: pointer;
     }
     input, button {
       padding: 10px;
@@ -82,6 +65,7 @@
     const db = firebase.database();
 
     let currentRoom = "";
+    let currentUser = "";
 
     function sendMessage() {
       const room = document.getElementById("room").value.trim();
@@ -94,7 +78,7 @@
         name: name,
         message: msg,
         time: new Date().toLocaleTimeString(),
-        reaction: ""
+        seen: false
       });
 
       document.getElementById("message").value = "";
@@ -102,35 +86,49 @@
 
     document.getElementById("room").addEventListener("input", () => {
       const room = document.getElementById("room").value.trim();
+      const name = document.getElementById("username").value.trim();
       const chatBox = document.getElementById("chat-box");
       chatBox.innerHTML = "";
       currentRoom = room;
+      currentUser = name;
 
-      if (room) {
+      if (room && name) {
         db.ref("rooms/" + room).off();
 
+        // عرض الرسائل وتحديث "seen"
         db.ref("rooms/" + room).on("child_added", (snapshot) => {
           const data = snapshot.val();
           const key = snapshot.key;
 
           const msgDiv = document.createElement("div");
-          msgDiv.className = "msg";
-          msgDiv.innerHTML = `🗨️ <b>${data.name}</b>: ${data.message} <small>(${data.time})</small>
-            <button class="react-btn" onclick="addReaction('${key}')">😊</button>
-            <div class="reaction" id="react-${key}">${data.reaction || ""}</div>`;
+          const isMyMessage = data.name === currentUser;
+
+          msgDiv.textContent = `🗨️ ${data.name}: ${data.message} (${data.time})`;
+
+          if (isMyMessage) {
+            if (data.seen) {
+              msgDiv.textContent += " ✅✅";
+            } else {
+              msgDiv.textContent += " ⏳";
+            }
+          }
 
           chatBox.appendChild(msgDiv);
           chatBox.scrollTop = chatBox.scrollHeight;
         });
+
+        // تحديث كل الرسائل إلى seen = true
+        db.ref("rooms/" + room).once("value", (snapshot) => {
+          snapshot.forEach((child) => {
+            if (!child.val().seen && child.val().name !== name) {
+              db.ref("rooms/" + room + "/" + child.key).update({
+                seen: true
+              });
+            }
+          });
+        });
       }
     });
-
-    function addReaction(msgId) {
-      const emoji = prompt("اختر إيموجي للتفاعل (مثلاً: ❤️ أو 😂 أو 🔥):");
-      if (emoji && currentRoom) {
-        db.ref(`rooms/${currentRoom}/${msgId}/reaction`).set(emoji);
-      }
-    }
   </script>
 </body>
 </html>
