@@ -10,24 +10,53 @@
       background-color: #111;
       color: white;
       font-family: Tahoma;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       padding: 20px;
     }
+
     h2 { color: #0f0; margin-bottom: 10px; }
+
+    #main {
+      display: flex;
+    }
+
+    #sidebar {
+      width: 200px;
+      background-color: #1a1a1a;
+      padding: 10px;
+      border-radius: 10px;
+      margin-left: 10px;
+      height: 500px;
+      overflow-y: auto;
+    }
+
+    .user-status {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+      border: 1px solid #fff;
+    }
+
+    .online { background-color: #0f0; }
+    .offline { background-color: #aaa; }
+
     #chat-box {
-      width: 90%;
-      max-width: 600px;
-      height: 400px;
+      flex: 1;
+      height: 500px;
       overflow-y: auto;
       background: #1a1a1a;
       border-radius: 10px;
       padding: 15px;
-      margin: 15px 0;
       display: flex;
       flex-direction: column;
     }
+
     .message {
       max-width: 80%;
       padding: 10px 15px;
@@ -37,58 +66,53 @@
       word-wrap: break-word;
       line-height: 1.4;
     }
+
     .my-message {
       background-color: #0f0;
       color: #000;
       align-self: flex-end;
       border-bottom-right-radius: 0;
     }
+
     .other-message {
       background-color: #333;
       color: #fff;
       align-self: flex-start;
       border-bottom-left-radius: 0;
     }
-    .sender { font-weight: bold; font-size: 0.85em; }
-    .time { font-size: 0.75em; opacity: 0.7; margin-top: 4px; text-align: right; }
+
     .system-message {
       color: #888;
       font-style: italic;
       text-align: center;
     }
+
+    .sender { font-weight: bold; font-size: 0.85em; }
+    .time { font-size: 0.75em; opacity: 0.7; margin-top: 4px; text-align: right; }
+
     input, button {
       padding: 10px;
       border: none;
       border-radius: 5px;
-      margin: 5px;
+      margin: 5px 0;
     }
+
     input { width: 60%; }
     #room { width: 200px; margin-bottom: 10px; }
+
     button {
       background-color: #0f0;
       color: black;
       cursor: pointer;
     }
-    .emoji-picker {
-      display: none;
-      background: #222;
-      border: 1px solid #333;
-      border-radius: 8px;
-      position: absolute;
-      bottom: 35px;
-      padding: 6px;
-    }
-    .emoji-picker span {
-      font-size: 20px;
-      cursor: pointer;
-      margin: 3px;
-    }
+
     .reactions {
       display: flex;
       flex-wrap: wrap;
       gap: 4px;
       margin-top: 5px;
     }
+
     .reaction {
       font-size: 14px;
       background: #444;
@@ -99,10 +123,19 @@
 </head>
 <body>
   <h2>🔐 دردشة ZEWEIL الخاصة</h2>
+
   <input type="text" id="room" placeholder="🛡️ كود الغرفة">
   <input type="text" id="username" placeholder="🡩‍💬 اسمك">
   <button onclick="joinRoom()">انضم</button>
-  <div id="chat-box"></div>
+
+  <div id="main">
+    <div id="chat-box"></div>
+    <div id="sidebar">
+      <h4>👥 الأعضاء</h4>
+      <div id="user-list"></div>
+    </div>
+  </div>
+
   <input type="text" id="message" placeholder="💬 رسالتك">
   <button onclick="sendMessage()">إرسال</button>
   <button onclick="startCall()">📹 مكالمة فيديو</button>
@@ -114,8 +147,35 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
     let currentRoom = "";
     let currentUser = "";
+
+    function joinRoom() {
+      const room = document.getElementById("room").value.trim();
+      const name = document.getElementById("username").value.trim();
+      if (!room || !name) return;
+
+      currentRoom = room;
+      currentUser = name;
+
+      localStorage.setItem("roomCode", room);
+      localStorage.setItem("userName", name);
+
+      db.ref("rooms/" + room).push({
+        name: "🚪 النظام",
+        message: `📢 لقد انضم ${name}`,
+        time: new Date().toLocaleTimeString(),
+        system: true
+      });
+
+      // حفظ حالة الاتصال
+      db.ref(`activeUsers/${room}/${name}`).set(true);
+      db.ref(`activeUsers/${room}/${name}`).onDisconnect().set(false);
+
+      loadMessages();
+      loadUsers();
+    }
 
     function sendMessage() {
       const msg = document.getElementById("message").value.trim();
@@ -129,30 +189,10 @@
       document.getElementById("message").value = "";
     }
 
-    function joinRoom() {
-      const room = document.getElementById("room").value.trim();
-      const name = document.getElementById("username").value.trim();
-      if (!room || !name) return;
-
-      currentRoom = room;
-      currentUser = name;
-
-      localStorage.setItem("roomCode", currentRoom);
-      localStorage.setItem("userName", currentUser);
-
+    function loadMessages() {
       document.getElementById("chat-box").innerHTML = "";
-      db.ref("rooms/" + room).off();
-
-      db.ref("rooms/" + room).push({
-        name: "🚪 النظام",
-        message: `📢 لقد انضم ${name}`,
-        time: new Date().toLocaleTimeString(),
-        system: true
-      });
-
-      db.ref("rooms/" + room).on("child_added", (snapshot) => {
+      db.ref("rooms/" + currentRoom).on("child_added", (snapshot) => {
         const data = snapshot.val();
-        const key = snapshot.key;
 
         const msgDiv = document.createElement("div");
         msgDiv.classList.add("message");
@@ -165,7 +205,6 @@
           return;
         }
 
-        msgDiv.ondblclick = () => showEmojiPicker(msgDiv, key);
         msgDiv.classList.add(data.name === currentUser ? "my-message" : "other-message");
 
         const reactionsDiv = document.createElement("div");
@@ -192,34 +231,28 @@
       });
     }
 
-    function addReaction(msgKey, emoji) {
-      const ref = db.ref(`rooms/${currentRoom}/${msgKey}/reactions/${emoji}`);
-      ref.once("value", snapshot => {
-        const users = snapshot.val() || [];
-        if (users.includes(currentUser)) {
-          ref.set(users.filter(u => u !== currentUser));
-        } else {
-          ref.set([...users, currentUser]);
-        }
-      });
-    }
+    function loadUsers() {
+      const userList = document.getElementById("user-list");
+      db.ref(`activeUsers/${currentRoom}`).on("value", (snapshot) => {
+        userList.innerHTML = "";
+        snapshot.forEach(child => {
+          const name = child.key;
+          const online = child.val();
 
-    function showEmojiPicker(target, msgKey) {
-      let picker = document.createElement("div");
-      picker.className = "emoji-picker";
-      ["❤️", "😂", "👍", "👎", "😮", "😢"].forEach(e => {
-        let span = document.createElement("span");
-        span.textContent = e;
-        span.onclick = () => {
-          addReaction(msgKey, e);
-          document.body.removeChild(picker);
-        };
-        picker.appendChild(span);
+          const userDiv = document.createElement("div");
+          userDiv.className = "user-status";
+
+          const dot = document.createElement("div");
+          dot.className = "status-dot " + (online ? "online" : "offline");
+
+          const span = document.createElement("span");
+          span.textContent = name;
+
+          userDiv.appendChild(dot);
+          userDiv.appendChild(span);
+          userList.appendChild(userDiv);
+        });
       });
-      document.body.appendChild(picker);
-      picker.style.left = target.getBoundingClientRect().left + "px";
-      picker.style.top = (target.getBoundingClientRect().top - 40) + "px";
-      picker.style.display = "block";
     }
 
     function startCall() {
@@ -232,7 +265,6 @@
       if (room) window.open("https://meet.jit.si/" + room + "-voice", "_blank");
     }
 
-    // إشعار المغادرة
     window.addEventListener('beforeunload', function () {
       const userName = localStorage.getItem('userName');
       const roomCode = localStorage.getItem('roomCode');
@@ -244,6 +276,7 @@
           time: new Date().toLocaleTimeString(),
           system: true
         });
+        db.ref(`activeUsers/${roomCode}/${userName}`).set(false);
       }
     });
   </script>
