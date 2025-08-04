@@ -46,6 +46,12 @@
       color: black;
       cursor: pointer;
     }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
   </style>
 </head>
 <body>
@@ -55,7 +61,11 @@
   <input type="text" id="username" placeholder="🧑‍💬 اسمك">
   <div id="chat-box"></div>
   <input type="text" id="message" placeholder="💬 رسالتك">
-  <button onclick="sendMessage()">إرسال</button>
+  
+  <div class="button-group">
+    <button onclick="sendMessage()">إرسال</button>
+    <button onclick="startCall()">📞 مكالمة</button>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -84,6 +94,18 @@
       document.getElementById("message").value = "";
     }
 
+    function startCall() {
+      const room = document.getElementById("room").value.trim();
+      const name = document.getElementById("username").value.trim();
+      if (!room || !name) {
+        alert("أدخل اسمك وكود الغرفة أولاً!");
+        return;
+      }
+      // افتح رابط الاتصال (يمكن تعديله برابط WebRTC فعلي مثل Jitsi)
+      const callLink = `https://meet.jit.si/ZEWEIL-${room}`;
+      window.open(callLink, "_blank");
+    }
+
     document.getElementById("room").addEventListener("input", () => {
       const room = document.getElementById("room").value.trim();
       const name = document.getElementById("username").value.trim();
@@ -95,7 +117,6 @@
       if (room && name) {
         db.ref("rooms/" + room).off();
 
-        // عرض الرسائل وتحديث "seen"
         db.ref("rooms/" + room).on("child_added", (snapshot) => {
           const data = snapshot.val();
           const key = snapshot.key;
@@ -117,7 +138,6 @@
           chatBox.scrollTop = chatBox.scrollHeight;
         });
 
-        // تحديث كل الرسائل إلى seen = true
         db.ref("rooms/" + room).once("value", (snapshot) => {
           snapshot.forEach((child) => {
             if (!child.val().seen && child.val().name !== name) {
