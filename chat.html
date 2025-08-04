@@ -15,50 +15,35 @@
       align-items: center;
       padding: 20px;
     }
-    h2 {
-      color: #0f0;
-      margin-bottom: 10px;
-    }
     #chat-box {
       width: 90%;
       max-width: 600px;
       height: 400px;
       overflow-y: auto;
-      background: #1a1a1a;
+      background: #222;
       border-radius: 10px;
-      padding: 15px;
+      padding: 10px;
       margin: 15px 0;
     }
-    .message {
-      max-width: 80%;
-      padding: 10px 15px;
-      margin: 8px 0;
-      border-radius: 15px;
+    .msg {
+      margin-bottom: 8px;
+      background: #333;
+      padding: 8px;
+      border-radius: 5px;
       position: relative;
-      word-wrap: break-word;
-      line-height: 1.4;
     }
-    .my-message {
-      background-color: #0f0;
-      color: #000;
-      align-self: flex-end;
-      border-bottom-right-radius: 0;
+    .reaction {
+      margin-top: 5px;
+      font-size: 16px;
     }
-    .other-message {
-      background-color: #333;
-      color: #fff;
-      align-self: flex-start;
-      border-bottom-left-radius: 0;
-    }
-    .sender {
-      font-weight: bold;
-      font-size: 0.85em;
-    }
-    .time {
-      font-size: 0.75em;
-      opacity: 0.7;
-      margin-top: 4px;
-      text-align: right;
+    .react-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: transparent;
+      border: none;
+      color: #0f0;
+      cursor: pointer;
     }
     input, button {
       padding: 10px;
@@ -67,7 +52,7 @@
       margin: 5px;
     }
     input {
-      width: 60%;
+      width: 65%;
     }
     #room {
       width: 200px;
@@ -85,7 +70,7 @@
   <h2>🔒 دردشة ZEWEIL الخاصة</h2>
   <input type="text" id="room" placeholder="🛡️ كود الغرفة">
   <input type="text" id="username" placeholder="🧑‍💬 اسمك">
-  <div id="chat-box" style="display: flex; flex-direction: column;"></div>
+  <div id="chat-box"></div>
   <input type="text" id="message" placeholder="💬 رسالتك">
   <button onclick="sendMessage()">إرسال</button>
 
@@ -97,7 +82,6 @@
     const db = firebase.database();
 
     let currentRoom = "";
-    let currentUser = "";
 
     function sendMessage() {
       const room = document.getElementById("room").value.trim();
@@ -106,12 +90,11 @@
 
       if (!room || !name || !msg) return;
 
-      currentUser = name;
-
       db.ref("rooms/" + room).push({
         name: name,
         message: msg,
-        time: new Date().toLocaleTimeString()
+        time: new Date().toLocaleTimeString(),
+        reaction: ""
       });
 
       document.getElementById("message").value = "";
@@ -122,33 +105,32 @@
       const chatBox = document.getElementById("chat-box");
       chatBox.innerHTML = "";
       currentRoom = room;
-      currentUser = document.getElementById("username").value.trim();
 
       if (room) {
         db.ref("rooms/" + room).off();
 
         db.ref("rooms/" + room).on("child_added", (snapshot) => {
           const data = snapshot.val();
+          const key = snapshot.key;
+
           const msgDiv = document.createElement("div");
-          msgDiv.classList.add("message");
-
-          if (data.name === currentUser) {
-            msgDiv.classList.add("my-message");
-          } else {
-            msgDiv.classList.add("other-message");
-          }
-
-          msgDiv.innerHTML = `
-            <div class="sender">${data.name}</div>
-            ${data.message}
-            <div class="time">${data.time}</div>
-          `;
+          msgDiv.className = "msg";
+          msgDiv.innerHTML = `🗨️ <b>${data.name}</b>: ${data.message} <small>(${data.time})</small>
+            <button class="react-btn" onclick="addReaction('${key}')">😊</button>
+            <div class="reaction" id="react-${key}">${data.reaction || ""}</div>`;
 
           chatBox.appendChild(msgDiv);
           chatBox.scrollTop = chatBox.scrollHeight;
         });
       }
     });
+
+    function addReaction(msgId) {
+      const emoji = prompt("اختر إيموجي للتفاعل (مثلاً: ❤️ أو 😂 أو 🔥):");
+      if (emoji && currentRoom) {
+        db.ref(`rooms/${currentRoom}/${msgId}/reaction`).set(emoji);
+      }
+    }
   </script>
 </body>
 </html>
