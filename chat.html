@@ -89,114 +89,120 @@
       margin-top: 5px;
       font-size: 18px;
     }
-    #status-bar {
-      margin-bottom: 10px;
-      font-size: 0.9em;
-      color: #aaa;
-    }
   </style>
 </head>
-<body>
-  <h2>🔒 دردشة ZEWEIL الخاصة</h2>
+<body>  
+  <h2>🔐 دردشة ZEWEIL الخاصة</h2>
   <input type="text" id="room" placeholder="🛡️ كود الغرفة">
-  <input type="text" id="username" placeholder="🧑‍💬 اسمك">
-  <div id="status-bar">الحالة: غير متصل</div>
+  <input type="text" id="username" placeholder="🡩‍💬 اسمك">
   <div id="chat-box"></div>
   <input type="text" id="message" placeholder="💬 رسالتك">
   <button onclick="sendMessage()">إرسال</button>
   <button onclick="startCall()">📹 مكالمة فيديو</button>
-  <button onclick="startVoiceCall()">📞 مكالمة صوت</button>  <script>
+  <script>
     const firebaseConfig = {
       databaseURL: "https://zeweil-chat-default-rtdb.europe-west1.firebasedatabase.app/"
     };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const db = firebase.database();let currentRoom = "";
+let currentUser = "";
 
-    let currentRoom = "";
-    let currentUser = "";
+function sendMessage() {
+  const room = document.getElementById("room").value.trim();
+  const name = document.getElementById("username").value.trim();
+  const msg = document.getElementById("message").value.trim();
 
-    function updateStatusBar(text) {
-      document.getElementById("status-bar").textContent = "الحالة: " + text;
-    }
+  if (!room || !name || !msg) return;
 
-    function sendMessage() {
-      const room = document.getElementById("room").value.trim();
-      const name = document.getElementById("username").value.trim();
-      const msg = document.getElementById("message").value.trim();
-      if (!room || !name || !msg) return;
-      currentUser = name;
-      db.ref("rooms/" + room).push({
-        name: name,
-        message: msg,
-        time: new Date().toLocaleTimeString(),
-        seen: false
-      });
-      db.ref("status/" + name).set("متصل الآن");
-      document.getElementById("message").value = "";
-    }
+  currentUser = name;
 
-    function react(el) {
-      const emoji = el.textContent;
-      const container = el.parentNode.querySelector('.reaction');
-      container.textContent = emoji;
-    }
+  db.ref("rooms/" + room).push({
+    name: name,
+    message: msg,
+    time: new Date().toLocaleTimeString()
+  });
 
-    function startCall() {
-      const room = document.getElementById("room").value.trim();
-      if (room) {
-        alert("🔔 لو بتستخدم موبايل:\n\n1. دوس على الثلاث نقط اللي فوق في المتصفح.\n2. فعل اختيار (موقع سطح المكتب) ✅.\n3. بعد كده الصفحة هتشتغل والمكالمة هتبدأ عادي.");
-        window.open("https://meet.jit.si/" + room, "_blank");
+  document.getElementById("message").value = "";
+}
+
+function react(el) {
+  const emoji = el.textContent;
+  const container = el.parentNode.querySelector('.reaction');
+  if (container.textContent === emoji) {
+    container.textContent = "";
+  } else {
+    container.textContent = emoji;
+  }
+}
+
+function startCall() {
+  const room = document.getElementById("room").value.trim();
+  if (room) {
+    alert("🔔 لو بتستخدم موبايل:\n\n1. دوس على الثلاث نقط اللي فوق في المتصفح.\n2. فعل اختيار (موقع سطح المكتب) ✅.\n3. بعد كده الصفحة هتشتغل والمكالمة هتبدأ عادي.");
+    window.open("https://meet.jit.si/" + room, "_blank");
+  } else {
+    alert("❗ لازم تدخل كود الغرفة الأول.");
+  }
+}
+
+document.getElementById("room").addEventListener("input", () => {
+  const room = document.getElementById("room").value.trim();
+  const chatBox = document.getElementById("chat-box");
+  chatBox.innerHTML = "";
+  currentRoom = room;
+  currentUser = document.getElementById("username").value.trim();
+
+  if (room) {
+    db.ref("rooms/" + room).off();
+
+    db.ref("rooms/" + room).on("child_added", (snapshot) => {
+      const data = snapshot.val();
+      const msgDiv = document.createElement("div");
+      msgDiv.classList.add("message");
+
+      if (data.name === currentUser) {
+        msgDiv.classList.add("my-message");
       } else {
-        alert("❗ لازم تدخل كود الغرفة الأول.");
+        msgDiv.classList.add("other-message");
       }
-    }
 
-    function startVoiceCall() {
-      const room = document.getElementById("room").value.trim();
-      if (room) {
-        window.open("https://meet.jit.si/" + room + "#config.startWithVideoMuted=true", "_blank");
-      } else {
-        alert("❗ لازم تدخل كود الغرفة الأول.");
-      }
-    }
+      msgDiv.innerHTML = `
+        <div class="sender">${data.name}</div>
+        ${data.message}
+        <div class="reaction"></div>
+        <div class="emoji" onclick="react(this)">❤️</div>
+        <div class="emoji" onclick="react(this)">😂</div>
+        <div class="emoji" onclick="react(this)">🔥</div>
+        <div class="time">${data.time}</div>
+      `;
 
-    document.getElementById("room").addEventListener("input", () => {
-      const room = document.getElementById("room").value.trim();
-      const chatBox = document.getElementById("chat-box");
-      chatBox.innerHTML = "";
-      currentRoom = room;
-      currentUser = document.getElementById("username").value.trim();
-      if (room && currentUser) {
-        updateStatusBar("يكتب الآن...");
-        db.ref("status/" + currentUser).set("متصل الآن");
-        db.ref("rooms/" + room).on("child_added", (snapshot) => {
-          const data = snapshot.val();
-          const msgDiv = document.createElement("div");
-          msgDiv.classList.add("message");
-          if (data.name === currentUser) {
-            msgDiv.classList.add("my-message");
-          } else {
-            msgDiv.classList.add("other-message");
-          }
-          msgDiv.innerHTML = `
-            <div class="sender">${data.name}</div>
-            ${data.message}
-            <div class="reaction"></div>
-            <div class="emoji" onclick="react(this)">❤️</div>
-            <div class="emoji" onclick="react(this)">😂</div>
-            <div class="emoji" onclick="react(this)">🔥</div>
-            <div class="time">${data.time} ✅</div>
-          `;
-          chatBox.appendChild(msgDiv);
-          chatBox.scrollTop = chatBox.scrollHeight;
-        });
-      }
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
     });
 
-    window.addEventListener("beforeunload", () => {
-      if (currentUser) {
-        db.ref("status/" + currentUser).set("آخر ظهور: " + new Date().toLocaleTimeString());
-      }
+    db.ref("status/" + currentUser).set({ online: true, lastSeen: new Date().toLocaleTimeString() });
+    db.ref("status/" + currentUser).onDisconnect().set({ online: false, lastSeen: new Date().toLocaleTimeString() });
+
+    db.ref("rooms/" + room).push({
+      name: "النظام",
+      message: `${currentUser} انضم إلى الغرفة ✅` ,
+      time: new Date().toLocaleTimeString()
     });
-  </script></body>
+  }
+});
+
+window.addEventListener("beforeunload", () => {
+  const room = document.getElementById("room").value.trim();
+  if (room && currentUser) {
+    db.ref("status/" + currentUser).set({ online: false, lastSeen: new Date().toLocaleTimeString() });
+    db.ref("rooms/" + room).push({
+      name: "النظام",
+      message: `${currentUser} غادر الغرفة ❌`,
+      time: new Date().toLocaleTimeString()
+    });
+  }
+});
+
+  </script>
+</body>
 </html>
