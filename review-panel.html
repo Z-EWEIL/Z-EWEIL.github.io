@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>لوحة المراجعة - تغيير الاسم</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      color: #0f0;
+    }
+    .request {
+      background: #222;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+    }
+    .request button {
+      margin-left: 10px;
+      padding: 5px 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+    }
+    .approve { background: #0a0; color: white; }
+    .reject { background: #a00; color: white; }
+  </style>
+</head>
+<body>
+
+  <h1>🛡️ لوحة مراجعة طلبات تغيير الاسم</h1>
+  <div id="loginSection">
+    <p>ادخل كلمة المرور:</p>
+    <input type="password" id="adminPass">
+    <button onclick="checkPassword()">دخول</button>
+  </div>
+
+  <div id="requestsSection" style="display:none;">
+    <h2>الطلبات:</h2>
+    <div id="requestsContainer"></div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const ADMIN_PASSWORD = "admin123"; // غيّر الباسورد هنا
+
+    function checkPassword() {
+      const input = document.getElementById('adminPass').value;
+      if (input === ADMIN_PASSWORD) {
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('requestsSection').style.display = 'block';
+        loadRequests();
+      } else {
+        alert("كلمة المرور غير صحيحة");
+      }
+    }
+
+    function loadRequests() {
+      const container = document.getElementById('requestsContainer');
+      db.ref("nameChangeRequests").on("value", snapshot => {
+        container.innerHTML = '';
+        snapshot.forEach(child => {
+          const req = child.val();
+          const div = document.createElement("div");
+          div.className = "request";
+          div.innerHTML = `
+            <strong>اللاعب:</strong> ${req.userId}<br>
+            <strong>الاسم الحالي:</strong> ${req.currentName}<br>
+            <strong>الاسم المطلوب:</strong> ${req.requestedName}<br>
+            <button class="approve" onclick="approveRequest('${child.key}', '${req.userId}', '${req.requestedName}')">موافقة ✅</button>
+            <button class="reject" onclick="rejectRequest('${child.key}')">رفض ❌</button>
+          `;
+          container.appendChild(div);
+        });
+      });
+    }
+
+    function approveRequest(requestId, userId, newName) {
+      db.ref("users/" + userId + "/name").set(newName);
+      db.ref("nameChangeRequests/" + requestId).remove();
+    }
+
+    function rejectRequest(requestId) {
+      db.ref("nameChangeRequests/" + requestId).remove();
+    }
+  </script>
+</body>
+</html>
