@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="ar">
+<!DOCTYPE html><html lang="ar">
 <head>
   <meta charset="UTF-8">
   <title>ZEWEIL Private Chat</title>
@@ -95,10 +94,40 @@
       padding: 2px 6px;
       border-radius: 10px;
     }
+    #onlineToggle {
+      position: absolute;
+      left: 15px;
+      top: 15px;
+      background: #0f0;
+      color: #000;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #onlineList {
+      position: absolute;
+      left: 15px;
+      top: 65px;
+      background: #222;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
+      max-height: 300px;
+      overflow-y: auto;
+      min-width: 200px;
+    }
   </style>
 </head>
 <body>
-  <h2>🔐 دردشة ZEWEIL الخاصة</h2>
+  <div id="onlineToggle">👥</div>
+  <div id="onlineList"></div>  <h2>🔐 دردشة ZEWEIL الخاصة</h2>
   <input type="text" id="room" placeholder="🛡️ كود الغرفة">
   <input type="text" id="username" placeholder="🡩‍💬 اسمك">
   <button onclick="joinRoom()">انضم</button>
@@ -106,9 +135,7 @@
   <input type="text" id="message" placeholder="💬 رسالتك">
   <button onclick="sendMessage()">إرسال</button>
   <button onclick="startCall()">📹 مكالمة فيديو</button>
-  <button onclick="startVoiceCall()">📞 مكالمة صوتية</button>
-
-  <script>
+  <button onclick="startVoiceCall()">📞 مكالمة صوتية</button>  <script>
     const firebaseConfig = {
       databaseURL: "https://zeweil-chat-default-rtdb.europe-west1.firebasedatabase.app/"
     };
@@ -117,10 +144,18 @@
     let currentRoom = "";
     let currentUser = "";
 
+    const userId = Date.now();
+    let userRef = null;
+
+    document.getElementById("onlineToggle").onclick = () => {
+      const list = document.getElementById("onlineList");
+      list.style.display = list.style.display === "block" ? "none" : "block";
+    };
+
     function sendMessage() {
       const msg = document.getElementById("message").value.trim();
       if (!currentRoom || !currentUser || !msg) return;
-      db.ref("rooms/" + currentRoom).push({
+      db.ref("rooms/" + currentRoom + "/messages").push({
         name: currentUser,
         message: msg,
         time: new Date().toLocaleTimeString(),
@@ -136,21 +171,24 @@
 
       currentRoom = room;
       currentUser = name;
+      userRef = db.ref(`rooms/${room}/users/${userId}`);
+      userRef.set({ name: currentUser, online: true });
+      userRef.onDisconnect().update({ online: false });
 
       localStorage.setItem("roomCode", currentRoom);
       localStorage.setItem("userName", currentUser);
 
       document.getElementById("chat-box").innerHTML = "";
-      db.ref("rooms/" + room).off();
+      db.ref("rooms/" + room + "/messages").off();
 
-      db.ref("rooms/" + room).push({
+      db.ref("rooms/" + room + "/messages").push({
         name: "🚪 النظام",
         message: `📢 لقد انضم ${name}`,
         time: new Date().toLocaleTimeString(),
         system: true
       });
 
-      db.ref("rooms/" + room).on("child_added", (snapshot) => {
+      db.ref("rooms/" + room + "/messages").on("child_added", (snapshot) => {
         const data = snapshot.val();
         const key = snapshot.key;
 
@@ -190,10 +228,21 @@
         document.getElementById("chat-box").appendChild(msgDiv);
         document.getElementById("chat-box").scrollTop = document.getElementById("chat-box").scrollHeight;
       });
+
+      db.ref(`rooms/${room}/users`).on("value", (snapshot) => {
+        const list = document.getElementById("onlineList");
+        list.innerHTML = "<strong>🟢 الأعضاء المتصلين:</strong><br><br>";
+        snapshot.forEach(child => {
+          const user = child.val();
+          if (user.online) {
+            list.innerHTML += `• ${user.name}<br>`;
+          }
+        });
+      });
     }
 
     function addReaction(msgKey, emoji) {
-      const ref = db.ref(`rooms/${currentRoom}/${msgKey}/reactions/${emoji}`);
+      const ref = db.ref(`rooms/${currentRoom}/messages/${msgKey}/reactions/${emoji}`);
       ref.once("value", snapshot => {
         const users = snapshot.val() || [];
         if (users.includes(currentUser)) {
@@ -232,20 +281,20 @@
       if (room) window.open("https://meet.jit.si/" + room + "-voice", "_blank");
     }
 
-    // إشعار المغادرة
     window.addEventListener('beforeunload', function () {
-      const userName = localStorage.getItem('userName');
       const roomCode = localStorage.getItem('roomCode');
-
-      if (userName && roomCode) {
-        db.ref("rooms/" + roomCode).push({
+      const userName = localStorage.getItem('userName');
+      if (roomCode && userName) {
+        db.ref("rooms/" + roomCode + "/messages").push({
           name: "🚪 النظام",
           message: `🚪 لقد غادر ${userName}`,
           time: new Date().toLocaleTimeString(),
           system: true
         });
+        if (userRef) {
+          userRef.update({ online: false });
+        }
       }
     });
-  </script>
-</body>
+  </script></body>
 </html>
