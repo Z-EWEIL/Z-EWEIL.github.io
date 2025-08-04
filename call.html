@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>مكالمة صوتية - ZEWEIL</title>
+  <style>
+    body {
+      background-color: #111;
+      color: white;
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      padding: 30px;
+    }
+
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      background-color: #0f0f0f;
+      color: #00ffcc;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #00ffcc;
+      color: #111;
+    }
+
+    iframe {
+      margin-top: 30px;
+      width: 90%;
+      height: 500px;
+      border: none;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>مكالمة ZEWEIL الصوتية</h1>
+  <p>ابدأ مكالمة صوتية خاصة بينك وبين صديقك</p>
+  <button onclick="startCall()">بدء المكالمة</button>
+
+  <div id="callArea" style="display:none;">
+    <iframe
+      id="jitsiFrame"
+      allow="microphone"
+    ></iframe>
+  </div>
+
+  <script>
+    function startCall() {
+      const room = "ZEWEIL_VoiceRoom"; // اسم الغرفة (ثابت)
+      const url = `https://meet.jit.si/${room}#config.startWithVideoMuted=true&config.prejoinPageEnabled=false`;
+
+      document.getElementById("jitsiFrame").src = url;
+      document.getElementById("callArea").style.display = "block";
+    }
+  </script>
+</body>
+</html>
