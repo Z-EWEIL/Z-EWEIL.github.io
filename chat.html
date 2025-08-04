@@ -1,154 +1,126 @@
-<!DOCTYPE html>
-<html lang="ar">
+<!DOCTYPE html><html>
 <head>
-  <meta charset="UTF-8">
-  <title>ZEWEIL Private Chat</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <title>ZEWEIL Chat</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <style>
-    body {
-      background-color: #111;
-      color: white;
-      font-family: Tahoma;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-    }
-    #chat-box {
-      width: 90%;
-      max-width: 600px;
-      height: 400px;
-      overflow-y: auto;
-      background: #222;
-      border-radius: 10px;
-      padding: 10px;
-      margin: 15px 0;
-    }
-    #chat-box div {
-      margin-bottom: 8px;
-    }
-    input, button {
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      margin: 5px;
-    }
-    input {
-      width: 65%;
-    }
-    #room {
-      width: 200px;
-      margin-bottom: 10px;
-    }
-    button {
-      background-color: #0f0;
-      color: black;
-      cursor: pointer;
-    }
-    .button-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
+    body { background: #000; color: #fff; font-family: Arial; }
+    #chat { max-width: 600px; margin: auto; padding: 20px; background: #111; border-radius: 10px; }
+    #messages { height: 300px; overflow-y: scroll; border: 1px solid #333; padding: 10px; margin-bottom: 10px; }
+    .message { margin-bottom: 5px; }
+    .status-bar { font-size: 0.8em; color: #aaa; margin-bottom: 10px; }
+    .online { color: #0f0; }
+    .offline { color: #f00; }
   </style>
 </head>
 <body>
-
-  <h2>🔒 دردشة ZEWEIL الخاصة</h2>
-  <input type="text" id="room" placeholder="🛡️ كود الغرفة">
-  <input type="text" id="username" placeholder="🧑‍💬 اسمك">
-  <div id="chat-box"></div>
-  <input type="text" id="message" placeholder="💬 رسالتك">
-  
-  <div class="button-group">
+  <div id="chat">
+    <div class="status-bar">
+      <span id="statusDisplay">غير متصل</span> | <span id="typingStatus"></span> | <span id="lastSeen"></span>
+    </div>
+    <div id="messages"></div>
+    <input type="text" id="message" placeholder="اكتب رسالة..." />
     <button onclick="sendMessage()">إرسال</button>
     <button onclick="startCall()">📞 مكالمة</button>
-  </div>
-
-  <script>
+  </div>  <script>
     const firebaseConfig = {
-      databaseURL: "https://zeweil-chat-default-rtdb.europe-west1.firebasedatabase.app/"
+      apiKey: "YOUR_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let currentRoom = "";
-    let currentUser = "";
+    let currentRoom = "room1";
+    let currentUser = prompt("ادخل اسمك:");
+    let typingTimeout;
+    let knownUsers = [];
 
     function sendMessage() {
-      const room = document.getElementById("room").value.trim();
-      const name = document.getElementById("username").value.trim();
-      const msg = document.getElementById("message").value.trim();
-
-      if (!room || !name || !msg) return;
-
-      db.ref("rooms/" + room).push({
-        name: name,
-        message: msg,
-        time: new Date().toLocaleTimeString(),
-        seen: false
-      });
-
-      document.getElementById("message").value = "";
+      const msg = document.getElementById("message").value;
+      if (msg) {
+        db.ref(`chat/${currentRoom}`).push({ name: currentUser, text: msg });
+        document.getElementById("message").value = "";
+        setTyping(false);
+      }
     }
 
     function startCall() {
-      const room = document.getElementById("room").value.trim();
-      const name = document.getElementById("username").value.trim();
-      if (!room || !name) {
-        alert("أدخل اسمك وكود الغرفة أولاً!");
-        return;
-      }
-      // افتح رابط الاتصال (يمكن تعديله برابط WebRTC فعلي مثل Jitsi)
-      const callLink = `https://meet.jit.si/ZEWEIL-${room}`;
-      window.open(callLink, "_blank");
+      const url = `https://meet.jit.si/ZEWEIL-${currentRoom}`;
+      window.open(url, "_blank");
     }
 
-    document.getElementById("room").addEventListener("input", () => {
-      const room = document.getElementById("room").value.trim();
-      const name = document.getElementById("username").value.trim();
-      const chatBox = document.getElementById("chat-box");
-      chatBox.innerHTML = "";
-      currentRoom = room;
-      currentUser = name;
+    // عرض الرسائل
+    db.ref(`chat/${currentRoom}`).on("child_added", (snapshot) => {
+      const msg = snapshot.val();
+      const div = document.createElement("div");
+      div.classList.add("message");
+      div.innerText = `${msg.name}: ${msg.text}`;
+      document.getElementById("messages").appendChild(div);
+    });
 
-      if (room && name) {
-        db.ref("rooms/" + room).off();
+    // حالة الكتابة
+    document.getElementById("message").addEventListener("input", () => {
+      setTyping(true);
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => setTyping(false), 2000);
+    });
 
-        db.ref("rooms/" + room).on("child_added", (snapshot) => {
-          const data = snapshot.val();
-          const key = snapshot.key;
+    function setTyping(status) {
+      db.ref(`status/${currentRoom}/${currentUser}`).update({
+        typing: status,
+        lastSeen: new Date().toLocaleTimeString(),
+        online: true
+      });
+    }
 
-          const msgDiv = document.createElement("div");
-          const isMyMessage = data.name === currentUser;
+    // تحديث واجهة الحالة
+    db.ref(`status/${currentRoom}`).on("value", (snapshot) => {
+      const users = snapshot.val();
+      let someoneTyping = false;
+      let lastSeenText = "";
+      let onlineStatus = "غير متصل";
 
-          msgDiv.textContent = `🗨️ ${data.name}: ${data.message} (${data.time})`;
+      for (let user in users) {
+        if (user !== currentUser) {
+          if (users[user].typing) someoneTyping = true;
+          if (users[user].lastSeen) lastSeenText = `آخر ظهور: ${users[user].lastSeen}`;
+          onlineStatus = users[user].online ? "<span class='online'>متصل</span>" : "<span class='offline'>غير متصل</span>";
+        }
+      }
 
-          if (isMyMessage) {
-            if (data.seen) {
-              msgDiv.textContent += " ✅✅";
-            } else {
-              msgDiv.textContent += " ⏳";
-            }
-          }
+      document.getElementById("typingStatus").innerText = someoneTyping ? "يكتب الآن..." : "";
+      document.getElementById("lastSeen").innerHTML = lastSeenText;
+      document.getElementById("statusDisplay").innerHTML = onlineStatus;
+    });
 
-          chatBox.appendChild(msgDiv);
-          chatBox.scrollTop = chatBox.scrollHeight;
-        });
-
-        db.ref("rooms/" + room).once("value", (snapshot) => {
-          snapshot.forEach((child) => {
-            if (!child.val().seen && child.val().name !== name) {
-              db.ref("rooms/" + room + "/" + child.key).update({
-                seen: true
-              });
-            }
-          });
-        });
+    // تنبيه دخول
+    db.ref(`status/${currentRoom}`).on("child_added", (snapshot) => {
+      const user = snapshot.key;
+      if (!knownUsers.includes(user) && user !== currentUser) {
+        knownUsers.push(user);
+        alert(`${user} دخل الغرفة 👋`);
       }
     });
-  </script>
-</body>
+
+    // الخروج وتحديث الحالة
+    window.addEventListener("beforeunload", () => {
+      db.ref(`status/${currentRoom}/${currentUser}`).update({
+        typing: false,
+        online: false,
+        lastSeen: new Date().toLocaleTimeString()
+      });
+    });
+
+    // أول دخول
+    db.ref(`status/${currentRoom}/${currentUser}`).set({
+      typing: false,
+      online: true,
+      lastSeen: new Date().toLocaleTimeString()
+    });
+  </script></body>
 </html>
