@@ -79,19 +79,35 @@
       color: black;
       cursor: pointer;
     }
-    .emoji {
+    .emoji-picker {
+      display: none;
+      background: #222;
+      border: 1px solid #333;
+      border-radius: 8px;
+      position: absolute;
+      bottom: 35px;
+      padding: 6px;
+    }
+    .emoji-picker span {
+      font-size: 20px;
       cursor: pointer;
-      margin-left: 6px;
-      font-size: 18px;
+      margin: 3px;
+    }
+    .reactions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 5px;
     }
     .reaction {
-      display: inline-block;
-      margin-top: 5px;
-      font-size: 18px;
+      font-size: 14px;
+      background: #444;
+      padding: 2px 6px;
+      border-radius: 10px;
     }
   </style>
 </head>
-<body>  
+<body>
   <h2>🔐 دردشة ZEWEIL الخاصة</h2>
   <input type="text" id="room" placeholder="🛡️ كود الغرفة">
   <input type="text" id="username" placeholder="🡩‍💬 اسمك">
@@ -99,120 +115,123 @@
   <input type="text" id="message" placeholder="💬 رسالتك">
   <button onclick="sendMessage()">إرسال</button>
   <button onclick="startCall()">📹 مكالمة فيديو</button>
-  <button onclick="startVoiceCall()">📞 مكالمة صوتية</button>
-  <script>
+  <button onclick="startVoiceCall()">📞 مكالمة صوتية</button>  <script>
     const firebaseConfig = {
       databaseURL: "https://zeweil-chat-default-rtdb.europe-west1.firebasedatabase.app/"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     let currentRoom = "";
-    let currentUser = "";function sendMessage() {
-  const room = document.getElementById("room").value.trim();
-  const name = document.getElementById("username").value.trim();
-  const msg = document.getElementById("message").value.trim();
+    let currentUser = "";
 
-  if (!room || !name || !msg) return;
+    function sendMessage() {
+      const room = document.getElementById("room").value.trim();
+      const name = document.getElementById("username").value.trim();
+      const msg = document.getElementById("message").value.trim();
 
-  currentUser = name;
+      if (!room || !name || !msg) return;
 
-  db.ref("rooms/" + room).push({
-    name: name,
-    message: msg,
-    time: new Date().toLocaleTimeString()
-  });
+      currentUser = name;
 
-  document.getElementById("message").value = "";
-}
+      db.ref("rooms/" + room).push({
+        name: name,
+        message: msg,
+        time: new Date().toLocaleTimeString(),
+        reactions: {}
+      });
 
-function react(el) {
-  const emoji = el.textContent;
-  const container = el.parentNode.querySelector('.reaction');
-  if (container.textContent === emoji) {
-    container.textContent = "";
-  } else {
-    container.textContent = emoji;
-  }
-}
+      document.getElementById("message").value = "";
+    }
 
-function startCall() {
-  const room = document.getElementById("room").value.trim();
-  if (room) {
-    alert("🔔 لو بتستخدم موبايل:\n\n1. دوس على الثلاث نقط اللي فوق في المتصفح.\n2. فعل اختيار (موقع سطح المكتب) ✅.\n3. بعد كده الصفحة هتشتغل والمكالمة هتبدأ عادي.");
-    window.open("https://meet.jit.si/" + room, "_blank");
-  } else {
-    alert("❗ لازم تدخل كود الغرفة الأول.");
-  }
-}
+    function addReaction(msgKey, emoji) {
+      const room = currentRoom;
+      const user = currentUser;
+      const ref = db.ref(`rooms/${room}/${msgKey}/reactions/${emoji}`);
 
-function startVoiceCall() {
-  const room = document.getElementById("room").value.trim();
-  if (room) {
-    alert("🔔 لو بتستخدم موبايل:\n\n1. دوس على الثلاث نقط اللي فوق في المتصفح.\n2. فعل اختيار (موقع سطح المكتب) ✅.\n3. بعد كده الصفحة هتشتغل والمكالمة الصوتية هتبدأ عادي.");
-    window.open("https://meet.jit.si/" + room + "-voice", "_blank");
-  } else {
-    alert("❗ لازم تدخل كود الغرفة الأول.");
-  }
-}
+      ref.once("value", snapshot => {
+        const users = snapshot.val() || [];
+        if (users.includes(user)) {
+          ref.set(users.filter(u => u !== user));
+        } else {
+          ref.set([...users, user]);
+        }
+      });
+    }
 
-document.getElementById("room").addEventListener("input", () => {
-  const room = document.getElementById("room").value.trim();
-  const chatBox = document.getElementById("chat-box");
-  chatBox.innerHTML = "";
-  currentRoom = room;
-  currentUser = document.getElementById("username").value.trim();
+    function showEmojiPicker(target, msgKey) {
+      let picker = document.createElement("div");
+      picker.className = "emoji-picker";
+      ["❤️", "😂", "👍", "👎", "😮", "😢"].forEach(e => {
+        let span = document.createElement("span");
+        span.textContent = e;
+        span.onclick = () => {
+          addReaction(msgKey, e);
+          document.body.removeChild(picker);
+        };
+        picker.appendChild(span);
+      });
+      document.body.appendChild(picker);
+      picker.style.left = target.getBoundingClientRect().left + "px";
+      picker.style.top = (target.getBoundingClientRect().top - 40) + "px";
+      picker.style.display = "block";
+    }
 
-  if (room) {
-    db.ref("rooms/" + room).off();
+    function startCall() {
+      const room = document.getElementById("room").value.trim();
+      if (room) window.open("https://meet.jit.si/" + room, "_blank");
+    }
 
-    db.ref("rooms/" + room).on("child_added", (snapshot) => {
-      const data = snapshot.val();
-      const msgDiv = document.createElement("div");
-      msgDiv.classList.add("message");
+    function startVoiceCall() {
+      const room = document.getElementById("room").value.trim();
+      if (room) window.open("https://meet.jit.si/" + room + "-voice", "_blank");
+    }
 
-      if (data.name === currentUser) {
-        msgDiv.classList.add("my-message");
-      } else {
-        msgDiv.classList.add("other-message");
+    document.getElementById("room").addEventListener("input", () => {
+      const room = document.getElementById("room").value.trim();
+      const chatBox = document.getElementById("chat-box");
+      chatBox.innerHTML = "";
+      currentRoom = room;
+      currentUser = document.getElementById("username").value.trim();
+
+      if (room) {
+        db.ref("rooms/" + room).off();
+        db.ref("rooms/" + room).on("child_added", (snapshot) => {
+          const data = snapshot.val();
+          const key = snapshot.key;
+          const msgDiv = document.createElement("div");
+          msgDiv.classList.add("message");
+          msgDiv.ondblclick = () => showEmojiPicker(msgDiv, key);
+
+          if (data.name === currentUser) {
+            msgDiv.classList.add("my-message");
+          } else {
+            msgDiv.classList.add("other-message");
+          }
+
+          const reactionsDiv = document.createElement("div");
+          reactionsDiv.className = "reactions";
+
+          if (data.reactions) {
+            Object.entries(data.reactions).forEach(([emoji, users]) => {
+              if (users.length > 0) {
+                const r = document.createElement("div");
+                r.className = "reaction";
+                r.textContent = `${emoji} ${users.length}`;
+                reactionsDiv.appendChild(r);
+              }
+            });
+          }
+
+          msgDiv.innerHTML = `
+            <div class="sender">${data.name}</div>
+            ${data.message}
+            <div class="time">${data.time}</div>
+          `;
+          msgDiv.appendChild(reactionsDiv);
+          chatBox.appendChild(msgDiv);
+          chatBox.scrollTop = chatBox.scrollHeight;
+        });
       }
-
-      msgDiv.innerHTML = `
-        <div class="sender">${data.name}</div>
-        ${data.message}
-        <div class="reaction"></div>
-        <div class="emoji" onclick="react(this)">❤️</div>
-        <div class="emoji" onclick="react(this)">😂</div>
-        <div class="emoji" onclick="react(this)">🔥</div>
-        <div class="time">${data.time}</div>
-      `;
-
-      chatBox.appendChild(msgDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
     });
-
-    db.ref("status/" + currentUser).set({ online: true, lastSeen: new Date().toLocaleTimeString() });
-    db.ref("status/" + currentUser).onDisconnect().set({ online: false, lastSeen: new Date().toLocaleTimeString() });
-
-    db.ref("rooms/" + room).push({
-      name: "النظام",
-      message: `${currentUser} انضم إلى الغرفة ✅` ,
-      time: new Date().toLocaleTimeString()
-    });
-  }
-});
-
-window.addEventListener("beforeunload", () => {
-  const room = document.getElementById("room").value.trim();
-  if (room && currentUser) {
-    db.ref("status/" + currentUser).set({ online: false, lastSeen: new Date().toLocaleTimeString() });
-    db.ref("rooms/" + room).push({
-      name: "النظام",
-      message: `${currentUser} غادر الغرفة ❌`,
-      time: new Date().toLocaleTimeString()
-    });
-  }
-});
-
-  </script>
-</body>
+  </script></body>
 </html>
