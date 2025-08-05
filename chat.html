@@ -1,175 +1,46 @@
-<!DOCTYPE html>
-<html lang="ar">
+<!DOCTYPE html><html lang="ar">
 <head>
   <meta charset="UTF-8">
   <title>ZEWEIL Private Chat</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
-    body {
-      background-color: #111;
-      color: white;
-      font-family: Tahoma;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-    }
+    body { background-color: #111; color: white; font-family: Tahoma; display: flex; flex-direction: column; align-items: center; padding: 20px; }
     h2 { color: #0f0; margin-bottom: 10px; }
-    #chat-box {
-      width: 90%;
-      max-width: 600px;
-      height: 400px;
-      overflow-y: auto;
-      background: #1a1a1a;
-      border-radius: 10px;
-      padding: 15px;
-      margin: 15px 0;
-      display: flex;
-      flex-direction: column;
-    }
-    .message {
-      max-width: 80%;
-      padding: 10px 15px;
-      margin: 8px 0;
-      border-radius: 15px;
-      position: relative;
-      word-wrap: break-word;
-      line-height: 1.4;
-    }
-    .my-message {
-      background-color: #0f0;
-      color: #000;
-      align-self: flex-end;
-      border-bottom-right-radius: 0;
-    }
-    .other-message {
-      background-color: #333;
-      color: #fff;
-      align-self: flex-start;
-      border-bottom-left-radius: 0;
-    }
-    .sender {
-      font-weight: bold;
-      font-size: 0.85em;
-    }
-    .time {
-      font-size: 0.75em;
-      opacity: 0.7;
-      margin-top: 4px;
-      text-align: right;
-    }
-    .system-message {
-      color: #888;
-      font-style: italic;
-      text-align: center;
-    }
-    input, button {
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      margin: 5px;
-    }
+    #chat-box { width: 90%; max-width: 600px; height: 400px; overflow-y: auto; background: #1a1a1a; border-radius: 10px; padding: 15px; margin: 15px 0; display: flex; flex-direction: column; }
+    .message { max-width: 80%; padding: 10px 15px; margin: 8px 0; border-radius: 15px; position: relative; word-wrap: break-word; line-height: 1.4; }
+    .my-message { background-color: #0f0; color: #000; align-self: flex-end; border-bottom-right-radius: 0; }
+    .other-message { background-color: #333; color: #fff; align-self: flex-start; border-bottom-left-radius: 0; }
+    .sender { font-weight: bold; font-size: 0.85em; }
+    .time { font-size: 0.75em; opacity: 0.7; margin-top: 4px; text-align: right; }
+    .system-message { color: #888; font-style: italic; text-align: center; }
+    input, button { padding: 10px; border: none; border-radius: 5px; margin: 5px; }
     input { width: 60%; }
     #room { width: 200px; margin-bottom: 10px; }
-    button {
-      background-color: #0f0;
-      color: black;
-      cursor: pointer;
-    }
-    .emoji-picker {
-      display: none;
-      background: #222;
-      border: 1px solid #333;
-      border-radius: 8px;
-      position: absolute;
-      bottom: 35px;
-      padding: 6px;
-    }
-    .emoji-picker span {
-      font-size: 20px;
-      cursor: pointer;
-      margin: 3px;
-    }
-    .reactions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 5px;
-    }
-    .reaction {
-      font-size: 14px;
-      background: #444;
-      padding: 2px 6px;
-      border-radius: 10px;
-    }
-    #onlineToggle {
-      position: absolute;
-      left: 15px;
-      top: 15px;
-      background: #0f0;
-      color: #000;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      font-size: 20px;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    #onlineList {
-      position: absolute;
-      left: 15px;
-      top: 65px;
-      background: #222;
-      color: white;
-      padding: 10px;
-      border-radius: 8px;
-      display: none;
-      max-height: 300px;
-      overflow-y: auto;
-      min-width: 200px;
-    }
-
-    #gift-btn, #admin-btn {
-      background-color: #222;
-      color: #0f0;
-      padding: 8px 16px;
-      border-radius: 8px;
-      margin-top: 10px;
-      border: 1px solid #0f0;
-    }
+    button { background-color: #0f0; color: black; cursor: pointer; }
+    .emoji-picker { display: none; background: #222; border: 1px solid #333; border-radius: 8px; position: absolute; bottom: 35px; padding: 6px; }
+    .emoji-picker span { font-size: 20px; cursor: pointer; margin: 3px; }
+    .reactions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+    .reaction { font-size: 14px; background: #444; padding: 2px 6px; border-radius: 10px; }
+    #onlineToggle { position: absolute; left: 15px; top: 15px; background: #0f0; color: #000; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    #onlineList { position: absolute; left: 15px; top: 65px; background: #222; color: white; padding: 10px; border-radius: 8px; display: none; max-height: 300px; overflow-y: auto; min-width: 200px; }
+    #giftShop { margin: 10px 0; }
   </style>
 </head>
 <body>
-
   <div id="onlineToggle">👥</div>
   <div id="onlineList"></div>
-
   <h2>🔐 دردشة ZEWEIL الخاصة</h2>
-
   <input type="text" id="room" placeholder="🛡️ كود الغرفة">
   <input type="text" id="username" placeholder="🡩‍💬 اسمك">
-  <button onclick="joinRoom()">انضم</button>
-
-  <div id="chat-box"></div>
-
+  <button onclick="joinRoom()">انضم</button>  <div id="giftShop">
+    <button onclick="window.open('https://app.fawaterk.com/paymentRequest/show/25451', '_blank')">🎁 شراء نقاط</button>
+    <span id="pointsDisplay">رصيدك: 0 🎯</span>
+  </div>  <div id="chat-box"></div>
   <input type="text" id="message" placeholder="💬 رسالتك">
   <button onclick="sendMessage()">إرسال</button>
   <button onclick="startCall()">📹 مكالمة فيديو</button>
-  <button onclick="startVoiceCall()">📞 مكالمة صوتية</button>
-
-  <!-- ✅ زر شراء النقاط -->
-  <a href="https://app.fawaterk.com/paymentRequest/show/25451" target="_blank">
-    <button id="gift-btn">🎁 شراء نقاط / هدايا</button>
-  </a>
-
-  <!-- ✅ زر لوحة المراجعة المخفي -->
-  <button id="admin-btn" onclick="openReview()">🛠️ لوحة المراجعة</button>
-
-  <script>
+  <button onclick="startVoiceCall()">📞 مكالمة صوتية</button>  <script>
     const firebaseConfig = {
       databaseURL: "https://zeweil-chat-default-rtdb.europe-west1.firebasedatabase.app/"
     };
@@ -180,6 +51,8 @@
     let currentUser = "";
     const userId = Date.now();
     let userRef = null;
+
+    const giftPrices = { '🌹': 5, '🎉': 10, '💎': 25, '🏆': 50 };
 
     document.getElementById("onlineToggle").onclick = () => {
       const list = document.getElementById("onlineList");
@@ -207,26 +80,19 @@
       currentUser = name;
       userRef = db.ref(`rooms/${room}/users/${userId}`);
       const now = Date.now();
-      userRef.set({ name: currentUser, online: true, lastSeen: now });
+
+      userRef.set({ name: currentUser, online: true, lastSeen: now, points: 0 });
       userRef.onDisconnect().update({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
 
       localStorage.setItem("roomCode", currentRoom);
       localStorage.setItem("userName", currentUser);
 
-      document.getElementById("chat-box").innerHTML = "";
       db.ref("rooms/" + room + "/messages").off();
-
-      db.ref("rooms/" + room + "/messages").push({
-        name: "🚪 النظام",
-        message: `📢 لقد انضم ${name}`,
-        time: new Date().toLocaleTimeString(),
-        system: true
-      });
+      document.getElementById("chat-box").innerHTML = "";
 
       db.ref("rooms/" + room + "/messages").on("child_added", (snapshot) => {
         const data = snapshot.val();
         const key = snapshot.key;
-
         const msgDiv = document.createElement("div");
         msgDiv.classList.add("message");
 
@@ -241,6 +107,11 @@
         msgDiv.ondblclick = () => showEmojiPicker(msgDiv, key);
         msgDiv.classList.add(data.name === currentUser ? "my-message" : "other-message");
 
+        const giftBtn = document.createElement("button");
+        giftBtn.textContent = "🎁";
+        giftBtn.onclick = () => sendGift(data.name);
+        msgDiv.appendChild(giftBtn);
+
         const reactionsDiv = document.createElement("div");
         reactionsDiv.className = "reactions";
         if (data.reactions) {
@@ -254,7 +125,7 @@
           });
         }
 
-        msgDiv.innerHTML = `
+        msgDiv.innerHTML += `
           <div class="sender">${data.name}</div>
           ${data.message}
           <div class="time">${data.time}</div>
@@ -262,6 +133,10 @@
         msgDiv.appendChild(reactionsDiv);
         document.getElementById("chat-box").appendChild(msgDiv);
         document.getElementById("chat-box").scrollTop = document.getElementById("chat-box").scrollHeight;
+      });
+
+      db.ref(`rooms/${room}/users/${userId}/points`).on("value", snap => {
+        document.getElementById("pointsDisplay").textContent = `رصيدك: ${snap.val() || 0} 🎯`;
       });
 
       db.ref(`rooms/${room}/users`).on("value", (snapshot) => {
@@ -281,13 +156,37 @@
             const minutes = Math.floor(diff / 60000);
             if (minutes < 1) line += "⭕ منذ لحظات";
             else if (minutes < 60) line += `⭕ منذ ${minutes} دقيقة`;
-            else {
-              const hours = Math.floor(minutes / 60);
-              line += `⭕ منذ ${hours} ساعة`;
-            }
+            else line += `⭕ منذ ${Math.floor(minutes / 60)} ساعة`;
           }
 
           list.innerHTML += `${line}<br>`;
+        });
+      });
+
+      db.ref("rooms/" + room + "/messages").push({
+        name: "🚪 النظام",
+        message: `📢 لقد انضم ${name}`,
+        time: new Date().toLocaleTimeString(),
+        system: true
+      });
+    }
+
+    function sendGift(toUser) {
+      const emoji = prompt("اختر هدية: 🌹 🎉 💎 🏆");
+      if (!giftPrices[emoji]) return alert("❌ هدية غير صحيحة");
+
+      const userPointsRef = db.ref(`rooms/${currentRoom}/users/${userId}/points`);
+      userPointsRef.once("value", snap => {
+        const currentPoints = snap.val() || 0;
+        const cost = giftPrices[emoji];
+        if (currentPoints < cost) return alert("❌ لا تملك نقاط كافية!");
+
+        userPointsRef.set(currentPoints - cost);
+        db.ref("rooms/" + currentRoom + "/messages").push({
+          name: "🎁 هدية",
+          message: `${currentUser} أرسل ${emoji} إلى ${toUser}`,
+          time: new Date().toLocaleTimeString(),
+          system: true
         });
       });
     }
@@ -332,15 +231,6 @@
       if (room) window.open("https://meet.jit.si/" + room + "-voice", "_blank");
     }
 
-    function openReview() {
-      const pass = prompt("ادخل كلمة المرور:");
-      if (pass === "123456") {
-        window.open("review.html", "_blank");
-      } else {
-        alert("كلمة مرور خاطئة");
-      }
-    }
-
     window.addEventListener('beforeunload', function () {
       const roomCode = localStorage.getItem('roomCode');
       const userName = localStorage.getItem('userName');
@@ -354,6 +244,5 @@
         userRef.update({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
       }
     });
-  </script>
-</body>
+  </script></body>
 </html>
