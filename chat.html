@@ -33,10 +33,12 @@
   <h2>🔐 دردشة ZEWEIL الخاصة</h2>
   <input type="text" id="room" placeholder="🛡️ كود الغرفة">
   <input type="text" id="username" placeholder="🡩‍💬 اسمك">
-  <button onclick="joinRoom()">انضم</button>  <div id="giftShop">
+  <button onclick="joinRoom()">انضم</button>
+  <div id="giftShop">
     <button onclick="window.open('https://app.fawaterk.com/paymentRequest/show/25451', '_blank')">🎁 شراء نقاط</button>
     <span id="pointsDisplay">رصيدك: 0 🎯</span>
-  </div>  <div id="chat-box"></div>
+  </div>
+  <div id="chat-box"></div>
   <input type="text" id="message" placeholder="💬 رسالتك">
   <button onclick="sendMessage()">إرسال</button>
   <button onclick="startCall()">📹 مكالمة فيديو</button>
@@ -104,13 +106,23 @@
           return;
         }
 
-        msgDiv.ondblclick = () => showEmojiPicker(msgDiv, key);
         msgDiv.classList.add(data.name === currentUser ? "my-message" : "other-message");
+        msgDiv.ondblclick = () => showEmojiPicker(msgDiv, key);
+
+        const senderDiv = document.createElement("div");
+        senderDiv.className = "sender";
+        senderDiv.textContent = data.name;
+
+        const messageText = document.createElement("div");
+        messageText.textContent = data.message;
+
+        const timeDiv = document.createElement("div");
+        timeDiv.className = "time";
+        timeDiv.textContent = data.time;
 
         const giftBtn = document.createElement("button");
         giftBtn.textContent = "🎁";
         giftBtn.onclick = () => sendGift(data.name);
-        msgDiv.appendChild(giftBtn);
 
         const reactionsDiv = document.createElement("div");
         reactionsDiv.className = "reactions";
@@ -125,12 +137,12 @@
           });
         }
 
-        msgDiv.innerHTML += `
-          <div class="sender">${data.name}</div>
-          ${data.message}
-          <div class="time">${data.time}</div>
-        `;
+        msgDiv.appendChild(senderDiv);
+        msgDiv.appendChild(messageText);
+        msgDiv.appendChild(timeDiv);
+        msgDiv.appendChild(giftBtn);
         msgDiv.appendChild(reactionsDiv);
+
         document.getElementById("chat-box").appendChild(msgDiv);
         document.getElementById("chat-box").scrollTop = document.getElementById("chat-box").scrollHeight;
       });
