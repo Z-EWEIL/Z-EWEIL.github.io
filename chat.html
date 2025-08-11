@@ -234,9 +234,7 @@
   document.getElementById("onlineToggle").onclick = () => {  
     const list = document.getElementById("onlineList");  
     list.style.display = list.style.display === "block" ? "none" : "block";  
-  };  
-
-  function getRankImg(rank) {  
+  };function getRankImg(rank) {  
     if (!rank) return "";  
     const baseRaw = "https://raw.githubusercontent.com/Z-EWEIL/Zeweil_chat/main/";  
     const filename = `${rank}.png`;  
@@ -397,9 +395,7 @@
     if (msgDiv) {  
       msgDiv.remove();  
     }  
-  }  
-
-  function sendMessage() {  
+  }function sendMessage() {  
     const msg = document.getElementById("message").value.trim();  
     if (!currentRoom || !currentUser || !msg) return;  
     db.ref("rooms/" + currentRoom + "/messages").push({  
@@ -564,9 +560,7 @@
         system: true,  
       });  
     });  
-  }  
-
-  function addReaction(msgKey, emoji) {  
+                                         }function addReaction(msgKey, emoji) {  
     const ref = db.ref(`rooms/${currentRoom}/messages/${msgKey}/reactions/${emoji}`);  
     ref.once("value", (snapshot) => {  
       const users = snapshot.val() || [];  
@@ -604,9 +598,7 @@
   function startVoiceCall() {  
     const room = document.getElementById("room").value.trim();  
     if (room) window.open("https://meet.jit.si/" + room + "-voice", "_blank");  
-  }  
-
-  window.addEventListener("beforeunload", function () {  
+  }window.addEventListener("beforeunload", function () {  
     const roomCode = localStorage.getItem("roomCode");  
     const userName = localStorage.getItem("userName");  
     if (roomCode && userName && userRef) {  
@@ -621,6 +613,4 @@
         lastSeen: firebase.database.ServerValue.TIMESTAMP,  
       });  
     }  
-  });  
-</script></body>
-</html>
+  });
