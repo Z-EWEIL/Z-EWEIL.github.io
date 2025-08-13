@@ -403,9 +403,10 @@
     db.ref("rooms/" + currentRoom + "/messages").push({
       userId: userId, // إضافة userId هنا
       name: currentUser,
+      // استخدام toLocaleString لتضمين التاريخ والوقت معًا
+      time: new Date().toLocaleString(),
+      timestamp: firebase.database.ServerValue.TIMESTAMP,
       message: msg,
-      time: new Date().toLocaleTimeString(),
-      timestamp: firebase.database.ServerValue.TIMESTAMP, // إضافة ختم زمني
       reactions: {},
     });
     document.getElementById("message").value = "";
@@ -511,7 +512,8 @@
     db.ref("rooms/" + room + "/messages").push({
       name: "🚪 النظام",
       message: `📢 لقد انضم ${name}`,
-      time: new Date().toLocaleTimeString(),
+      // استخدام toLocaleString لتضمين التاريخ والوقت معًا
+      time: new Date().toLocaleString(),
       timestamp: firebase.database.ServerValue.TIMESTAMP,
       system: true,
     });
@@ -577,7 +579,8 @@
       db.ref("rooms/" + currentRoom + "/messages").push({
         name: "🎁 هدية",
         message: `${currentUser} أرسل ${emoji} إلى ${toUser}`,
-        time: new Date().toLocaleTimeString(),
+        // استخدام toLocaleString لتضمين التاريخ والوقت معًا
+        time: new Date().toLocaleString(),
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         system: true,
       });
@@ -631,7 +634,8 @@
       db.ref("rooms/" + roomCode + "/messages").push({
         name: "🚪 النظام",
         message: `🚪 لقد غادر ${userName}`,
-        time: new Date().toLocaleTimeString(),
+        // استخدام toLocaleString لتضمين التاريخ والوقت معًا
+        time: new Date().toLocaleString(),
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         system: true,
       });
