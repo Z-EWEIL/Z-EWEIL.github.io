@@ -447,13 +447,21 @@
     db.ref("rooms/" + room + "/messages").off();
     document.getElementById("chat-box").innerHTML = "";
 
-    // 1. الحصول على جميع الرسائل مرة واحدة وترتيبها
+    // 1. الحصول على جميع الرسائل مرة واحدة وترتيبها زمنياً
     db.ref("rooms/" + room + "/messages").orderByChild("timestamp").once("value", (snapshot) => {
+      const messages = [];
       snapshot.forEach((child) => {
-        const data = child.val();
-        const key = child.key;
-        addMessageToDOM(key, data);
+        messages.push({
+          key: child.key,
+          data: child.val()
+        });
       });
+
+      // إضافة الرسائل إلى DOM بعد تحميلها وترتيبها
+      messages.forEach(msg => {
+        addMessageToDOM(msg.key, msg.data);
+      });
+
       // الانتقال لأسفل بعد تحميل كل الرسائل
       document.getElementById("chat-box").scrollTop = document.getElementById("chat-box").scrollHeight;
     });
