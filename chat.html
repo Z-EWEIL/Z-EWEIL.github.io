@@ -234,6 +234,19 @@
     list.style.display = list.style.display === "block" ? "none" : "block";
   };
 
+  // دالة لتنسيق الوقت والتاريخ
+  function formatDateTime(timestamp) {
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const seconds = date.getSeconds().toString().padStart(2, '0');
+    return `التاريخ: ${day}/${month}/${year} | الوقت: ${hours}:${minutes}:${seconds}`;
+  }
+
+
   function getRankImg(rank) {
     if (!rank) return "";
     const baseRaw = "https://raw.githubusercontent.com/Z-EWEIL/Zeweil_chat/main/";
@@ -275,7 +288,7 @@
       msgDiv.innerHTML = `
         <div class="sender">${data.name} ${rankImg}</div>
         <div class="message-content">${data.message}</div>
-        <div class="time">${data.time}</div>
+        <div class="time">${formatDateTime(data.timestamp)}</div>
       `;
 
       if (isMyMessage) {
@@ -348,7 +361,7 @@
       msgDiv.innerHTML = `
         <div class="sender">${data.name} ${rankImg}</div>
         <div class="message-content">${data.message}</div>
-        <div class="time">${data.time}</div>
+        <div class="time">${formatDateTime(data.timestamp)}</div>
       `;
 
       if (isMyMessage) {
@@ -403,7 +416,6 @@
     db.ref("rooms/" + currentRoom + "/messages").push({
       userId: userId, // إضافة userId هنا
       name: currentUser,
-      // استخدام toLocaleString لتضمين التاريخ والوقت معًا
       time: new Date().toLocaleString(),
       timestamp: firebase.database.ServerValue.TIMESTAMP,
       message: msg,
@@ -520,7 +532,6 @@
     db.ref("rooms/" + room + "/messages").push({
       name: "🚪 النظام",
       message: `📢 لقد انضم ${name}`,
-      // استخدام toLocaleString لتضمين التاريخ والوقت معًا
       time: new Date().toLocaleString(),
       timestamp: firebase.database.ServerValue.TIMESTAMP,
       system: true,
@@ -587,7 +598,6 @@
       db.ref("rooms/" + currentRoom + "/messages").push({
         name: "🎁 هدية",
         message: `${currentUser} أرسل ${emoji} إلى ${toUser}`,
-        // استخدام toLocaleString لتضمين التاريخ والوقت معًا
         time: new Date().toLocaleString(),
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         system: true,
@@ -642,7 +652,6 @@
       db.ref("rooms/" + roomCode + "/messages").push({
         name: "🚪 النظام",
         message: `🚪 لقد غادر ${userName}`,
-        // استخدام toLocaleString لتضمين التاريخ والوقت معًا
         time: new Date().toLocaleString(),
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         system: true,
