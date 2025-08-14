@@ -30,7 +30,7 @@
       padding: 15px;
       margin: 15px 0;
       display: flex;
-      flex-direction: column-reverse; /* التعديل هنا لترتيب الرسائل من الأسفل للأعلى */
+      flex-direction: column; /* تم تعديل هذا السطر ليعود للترتيب الطبيعي */
     }
     .message {
       max-width: 80%;
@@ -44,14 +44,14 @@
     .my-message {
       background-color: #0f0;
       color: #000;
-      align-self: flex-start; /* التعديل هنا: الرسائل بتاعتي هتكون في الشمال */
-      border-bottom-left-radius: 0; /* التعديل هنا: الزاوية اللي تحت على الشمال هتبقى مربعة */
+      align-self: flex-end; /* تم تعديل هذا السطر لرسائل المستخدم تكون على اليمين */
+      border-bottom-right-radius: 0; /* تم تعديل هذا السطر لتكون الزاوية السفلية اليمنى مربعة */
     }
     .other-message {
       background-color: #333;
       color: #fff;
-      align-self: flex-end; /* التعديل هنا: الرسائل بتاعة الناس التانية هتكون في اليمين */
-      border-bottom-right-radius: 0; /* التعديل هنا: الزاوية اللي تحت على اليمين هتبقى مربعة */
+      align-self: flex-start; /* تم تعديل هذا السطر لرسائل الآخرين تكون على اليسار */
+      border-bottom-left-radius: 0; /* تم تعديل هذا السطر لتكون الزاوية السفلية اليسرى مربعة */
     }
     .sender {
       font-weight: bold;
