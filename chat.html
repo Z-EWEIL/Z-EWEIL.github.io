@@ -455,10 +455,10 @@
     localStorage.setItem("roomCode", currentRoom);
     localStorage.setItem("userName", currentUser);
 
-    // **التعديل هنا:** إزالة الـ `off()` وتغيير طريقة العرض
-    // db.ref("rooms/" + room + "/messages").off();
+    // **التعديل هنا:** حذف المستمع القديم قبل إضافة الجديد
+    db.ref("rooms/" + room + "/messages").off();
 
-    // **التعديل الجديد:** مسح كل الرسائل الموجودة في صندوق الدردشة أولاً
+    // **التعديل هنا:** مسح كل الرسائل الموجودة في صندوق الدردشة أولاً
     document.getElementById("chat-box").innerHTML = "";
 
     // **التعديل هنا:** استخدم orderByChild("timestamp")
