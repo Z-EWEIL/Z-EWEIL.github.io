@@ -255,8 +255,7 @@
   }
 
   function addMessageToDOM(key, data) {
-    //  **التعديل هنا:** حذف الشرط ده عشان يشتغل بشكل صحيح
-    // if(document.getElementById(key)) return;
+    if(document.getElementById(key)) return;
 
     const msgDiv = document.createElement("div");
     msgDiv.id = key;
@@ -456,8 +455,10 @@
     localStorage.setItem("roomCode", currentRoom);
     localStorage.setItem("userName", currentUser);
 
-    // حذف المستمعين القدامى قبل إضافة الجدد
-    db.ref("rooms/" + room + "/messages").off();
+    // **التعديل هنا:** إزالة الـ `off()` وتغيير طريقة العرض
+    // db.ref("rooms/" + room + "/messages").off();
+
+    // **التعديل الجديد:** مسح كل الرسائل الموجودة في صندوق الدردشة أولاً
     document.getElementById("chat-box").innerHTML = "";
 
     // **التعديل هنا:** استخدم orderByChild("timestamp")
