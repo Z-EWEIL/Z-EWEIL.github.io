@@ -459,14 +459,11 @@
     db.ref("rooms/" + room + "/messages").off();
     document.getElementById("chat-box").innerHTML = "";
 
-    // **التعديل هنا:** استخدم orderByChild("timestamp") بدلاً من orderByChild("time")
+    // **التعديل هنا:** استخدم orderByChild("timestamp")
     db.ref("rooms/" + room + "/messages").orderByChild("timestamp").on("child_added", (snapshot) => {
       const data = snapshot.val();
       const key = snapshot.key;
-      // نتأكد من أن الرسالة لم يتم عرضها مسبقاً
-      if (!document.getElementById(key)) {
-        addMessageToDOM(key, data);
-      }
+      addMessageToDOM(key, data);
     });
 
     db.ref("rooms/" + room + "/messages").on("child_changed", (snapshot) => {
