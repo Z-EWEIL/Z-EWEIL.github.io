@@ -255,7 +255,8 @@
   }
 
   function addMessageToDOM(key, data) {
-    if(document.getElementById(key)) return;
+    //  **التعديل هنا:** حذف الشرط ده عشان يشتغل بشكل صحيح
+    // if(document.getElementById(key)) return;
 
     const msgDiv = document.createElement("div");
     msgDiv.id = key;
