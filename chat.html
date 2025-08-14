@@ -459,32 +459,15 @@
     db.ref("rooms/" + room + "/messages").off();
     document.getElementById("chat-box").innerHTML = "";
 
-    // 1. الحصول على جميع الرسائل مرة واحدة وترتيبها زمنياً
-    db.ref("rooms/" + room + "/messages").orderByChild("timestamp").once("value", (snapshot) => {
-      const messages = [];
-      snapshot.forEach((child) => {
-        messages.push({
-          key: child.key,
-          data: child.val()
-        });
-      });
-
-      // إضافة الرسائل إلى DOM بعد تحميلها وترتيبها
-      messages.forEach(msg => {
-        addMessageToDOM(msg.key, msg.data);
-      });
-
-      // الانتقال لأسفل بعد تحميل كل الرسائل
-      document.getElementById("chat-box").scrollTop = document.getElementById("chat-box").scrollHeight;
-
-      // 2. استخدام "child_added" فقط للرسائل الجديدة بعد التحميل الأولي
-      db.ref("rooms/" + room + "/messages").orderByChild("timestamp").startAt(messages[messages.length - 1].data.timestamp + 1).on("child_added", (snapshot) => {
-        const data = snapshot.val();
-        const key = snapshot.key;
+    // **التعديل هنا:** استخدم orderByChild().on("child_added") لتحميل كل الرسائل بالترتيب
+    db.ref("rooms/" + room + "/messages").orderByChild("timestamp").on("child_added", (snapshot) => {
+      const data = snapshot.val();
+      const key = snapshot.key;
+      // نتأكد من أن الرسالة لم يتم عرضها مسبقاً
+      if (!document.getElementById(key)) {
         addMessageToDOM(key, data);
-      });
+      }
     });
-
 
     db.ref("rooms/" + room + "/messages").on("child_changed", (snapshot) => {
       const data = snapshot.val();
