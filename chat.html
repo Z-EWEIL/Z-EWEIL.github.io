@@ -255,7 +255,11 @@
   }
 
   function addMessageToDOM(key, data) {
-    if(document.getElementById(key)) return;
+    // **التعديل هنا:** تأكد من عدم وجود الرسالة بالفعل قبل إضافتها
+    if(document.getElementById(key)) {
+        console.log(`Message with key ${key} already exists, skipping.`);
+        return;
+    }
 
     const msgDiv = document.createElement("div");
     msgDiv.id = key;
@@ -455,12 +459,10 @@
     localStorage.setItem("roomCode", currentRoom);
     localStorage.setItem("userName", currentUser);
 
-    // **التعديل هنا:** حذف المستمع القديم قبل إضافة الجديد
+    // حذف المستمعين القدامى قبل إضافة الجدد
     db.ref("rooms/" + room + "/messages").off();
-
-    // **التعديل هنا:** مسح كل الرسائل الموجودة في صندوق الدردشة أولاً
     document.getElementById("chat-box").innerHTML = "";
-
+    
     // **التعديل هنا:** استخدم orderByChild("timestamp")
     db.ref("rooms/" + room + "/messages").orderByChild("timestamp").on("child_added", (snapshot) => {
       const data = snapshot.val();
