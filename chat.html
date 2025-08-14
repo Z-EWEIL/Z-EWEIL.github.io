@@ -459,7 +459,7 @@
     db.ref("rooms/" + room + "/messages").off();
     document.getElementById("chat-box").innerHTML = "";
 
-    // **التعديل هنا:** استخدم orderByChild().on("child_added") لتحميل كل الرسائل بالترتيب
+    // **التعديل هنا:** استخدم orderByChild("timestamp") بدلاً من orderByChild("time")
     db.ref("rooms/" + room + "/messages").orderByChild("timestamp").on("child_added", (snapshot) => {
       const data = snapshot.val();
       const key = snapshot.key;
