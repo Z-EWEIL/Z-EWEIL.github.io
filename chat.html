@@ -30,7 +30,7 @@
       padding: 15px;
       margin: 15px 0;
       display: flex;
-      flex-direction: column;
+      flex-direction: column-reverse; /* التعديل هنا لترتيب الرسائل من الأسفل للأعلى */
     }
     .message {
       max-width: 80%;
@@ -44,14 +44,14 @@
     .my-message {
       background-color: #0f0;
       color: #000;
-      align-self: flex-end;
-      border-bottom-right-radius: 0;
+      align-self: flex-start; /* التعديل هنا: الرسائل بتاعتي هتكون في الشمال */
+      border-bottom-left-radius: 0; /* التعديل هنا: الزاوية اللي تحت على الشمال هتبقى مربعة */
     }
     .other-message {
       background-color: #333;
       color: #fff;
-      align-self: flex-start;
-      border-bottom-left-radius: 0;
+      align-self: flex-end; /* التعديل هنا: الرسائل بتاعة الناس التانية هتكون في اليمين */
+      border-bottom-right-radius: 0; /* التعديل هنا: الزاوية اللي تحت على اليمين هتبقى مربعة */
     }
     .sender {
       font-weight: bold;
@@ -198,7 +198,8 @@
   <input type="text" id="message" placeholder="💬 رسالتك" />
   <button onclick="sendMessage()">إرسال</button>
   <button onclick="startCall()">📹 مكالمة فيديو</button>
-  <button onclick="startVoiceCall()">📞 مكالمة صوتية</button><script>
+  <button onclick="startVoiceCall()">📞 مكالمة صوتية</button>
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyAlim9FOvDcMqTJWINoBCHk3k6DNXS-jTo",
     authDomain: "zeweil-chat.firebaseapp.com",
@@ -255,12 +256,10 @@
   }
 
   function addMessageToDOM(key, data) {
-    // **التعديل هنا:** تأكد من عدم وجود الرسالة بالفعل قبل إضافتها
     if(document.getElementById(key)) {
-        console.log(`Message with key ${key} already exists, skipping.`);
         return;
     }
-
+    
     const msgDiv = document.createElement("div");
     msgDiv.id = key;
     msgDiv.classList.add("message");
@@ -459,11 +458,10 @@
     localStorage.setItem("roomCode", currentRoom);
     localStorage.setItem("userName", currentUser);
 
-    // حذف المستمعين القدامى قبل إضافة الجدد
     db.ref("rooms/" + room + "/messages").off();
     document.getElementById("chat-box").innerHTML = "";
-    
-    // **التعديل هنا:** استخدم orderByChild("timestamp")
+
+    // **التعديل هنا:** استخدم orderByChild("timestamp") لترتيب الرسائل بشكل صحيح
     db.ref("rooms/" + room + "/messages").orderByChild("timestamp").on("child_added", (snapshot) => {
       const data = snapshot.val();
       const key = snapshot.key;
@@ -644,5 +642,6 @@
       });
     }
   });
-</script></body>
+</script>
+</body>
 </html>
