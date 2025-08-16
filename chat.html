@@ -220,6 +220,78 @@
       font-size: 0.9em;
       color: #fff;
     }
+    /* تنسيق صندوق الإشعارات الجديد */
+    #notificationButton {
+      position: fixed;
+      top: 15px;
+      right: 70px;
+      background-color: #333;
+      color: white;
+      font-size: 24px;
+      padding: 10px 14px;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 10px #222;
+      transition: background-color 0.3s ease;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #notificationButton:hover {
+      background-color: #444;
+    }
+    #notificationCount {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background-color: red;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: bold;
+      display: none;
+    }
+    #notificationBox {
+      position: fixed;
+      top: 70px;
+      right: 15px;
+      width: 300px;
+      max-height: 400px;
+      background: #222;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      display: none;
+      padding: 10px;
+      overflow-y: auto;
+    }
+    .notification-item {
+      padding: 10px;
+      border-bottom: 1px solid #333;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .notification-item:last-child {
+      border-bottom: none;
+    }
+    .notification-item:hover {
+      background-color: #333;
+    }
+    .notification-item.unread {
+      background-color: #444;
+      font-weight: bold;
+    }
+    .notification-sender {
+      color: #0f0;
+      font-size: 0.9em;
+    }
+    .notification-content {
+      color: #ccc;
+      font-size: 0.8em;
+      margin-top: 5px;
+    }
   </style>
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
@@ -234,6 +306,10 @@
 <body>
   <div id="onlineToggle">👥</div>
   <div id="onlineList"></div>
+  <div id="notificationButton" onclick="toggleNotifications()">
+    🔔<span id="notificationCount"></span>
+  </div>
+  <div id="notificationBox"></div>
   <a href="https://zeweil-chat.vercel.app/rank-shop.html" id="shopButton" title="متجر الرتب">🛒</a>
   <h2>🌐 ℤ 𝔼 𝕎 𝔼 𝕀 𝕃  ℂ ℍ 𝔸 𝕋</h2>
   <input type="text" id="room" placeholder="🛡️ كود الغرفة" />
@@ -294,6 +370,76 @@
     const list = document.getElementById("onlineList");
     list.style.display = list.style.display === "block" ? "none" : "block";
   };
+  
+  // دالة لإظهار وإخفاء صندوق الإشعارات
+  function toggleNotifications() {
+      const box = document.getElementById("notificationBox");
+      const button = document.getElementById("notificationButton");
+      if (box.style.display === "block") {
+          box.style.display = "none";
+          // يمكن هنا إضافة دالة لقراءة كل الإشعارات
+      } else {
+          box.style.display = "block";
+          markAllNotificationsAsRead();
+      }
+  }
+  
+  // دالة لعرض الإشعارات في الصندوق
+  function displayNotification(key, data) {
+      const box = document.getElementById("notificationBox");
+      const notificationItem = document.createElement("div");
+      notificationItem.id = `notif-${key}`;
+      notificationItem.classList.add("notification-item");
+      if (!data.isRead) {
+          notificationItem.classList.add("unread");
+      }
+      
+      notificationItem.innerHTML = `
+          <div class="notification-sender">رد من ${data.senderName}</div>
+          <div class="notification-content">${data.messageContent}</div>
+      `;
+      
+      // إضافة الإشعار في بداية الصندوق ليظهر الأحدث أولاً
+      box.prepend(notificationItem);
+      updateNotificationCount();
+  }
+  
+  // دالة لتحديث عداد الإشعارات
+  function updateNotificationCount() {
+      if (!userId) return;
+      db.ref(`users/${userId}/notifications`).once("value", (snapshot) => {
+          let unreadCount = 0;
+          snapshot.forEach((child) => {
+              if (!child.val().isRead) {
+                  unreadCount++;
+              }
+          });
+          const countSpan = document.getElementById("notificationCount");
+          if (unreadCount > 0) {
+              countSpan.textContent = unreadCount;
+              countSpan.style.display = "block";
+          } else {
+              countSpan.style.display = "none";
+          }
+      });
+  }
+  
+  // دالة لقراءة جميع الإشعارات
+  function markAllNotificationsAsRead() {
+      if (!userId) return;
+      db.ref(`users/${userId}/notifications`).once("value", (snapshot) => {
+          const updates = {};
+          snapshot.forEach((child) => {
+              const notifId = child.key;
+              updates[`${notifId}/isRead`] = true;
+          });
+          db.ref(`users/${userId}/notifications`).update(updates).then(() => {
+              // تحديث العرض في الواجهة بعد التحديث في القاعدة
+              document.querySelectorAll('.notification-item').forEach(el => el.classList.remove('unread'));
+              updateNotificationCount();
+          });
+      });
+  }
 
   // دالة لتنسيق الوقت والتاريخ
   function formatDateTime(timestamp) {
@@ -500,44 +646,54 @@
     });
 
     if (replyingToMessageKey) {
-      // هذه رسالة رد، لذا نرسل إشعارًا للشخص الذي تم الرد عليه فقط
       db.ref(`rooms/${currentRoom}/messages/${replyingToMessageKey}`).once(
         "value",
         (snapshot) => {
           const originalMessage = snapshot.val();
           if (originalMessage && originalMessage.userId) {
-            db.ref(`rooms/${currentRoom}/users/${originalMessage.userId}`).once(
-              "value",
-              (userSnapshot) => {
-                const recipientUser = userSnapshot.val();
-                if (
-                  recipientUser &&
-                  recipientUser.notificationsEnabled !== false &&
-                  recipientUser.fcmToken &&
-                  originalMessage.userId !== userId
-                ) {
-                  // نرسل الإشعار فقط لصاحب الرسالة الأصلية
-                  OneSignal.push(() => {
-                    OneSignal.postNotification({
-                      contents: {
-                        en: `قام ${currentUser} بالرد على رسالتك.`,
-                        ar: `قام ${currentUser} بالرد على رسالتك.`,
-                      },
-                      headings: {
-                        en: `دردشة ${currentRoom}`,
-                        ar: `دردشة ${currentRoom}`,
-                      },
-                      include_player_ids: [recipientUser.fcmToken],
-                    });
+              const recipientUserId = originalMessage.userId;
+              
+              // إضافة الإشعار إلى قاعدة البيانات للمستخدم المُستلم
+              if (recipientUserId !== userId) { // لا ترسل إشعارًا لنفسك
+                  db.ref(`users/${recipientUserId}/notifications`).push({
+                      senderName: currentUser,
+                      messageContent: msg,
+                      repliedToMessage: originalMessage.message,
+                      timestamp: firebase.database.ServerValue.TIMESTAMP,
+                      isRead: false,
                   });
-                }
               }
-            );
+              
+              db.ref(`rooms/${currentRoom}/users/${recipientUserId}`).once(
+                "value",
+                (userSnapshot) => {
+                  const recipientUser = userSnapshot.val();
+                  if (
+                    recipientUser &&
+                    recipientUser.notificationsEnabled !== false &&
+                    recipientUser.fcmToken &&
+                    recipientUserId !== userId
+                  ) {
+                    OneSignal.push(() => {
+                      OneSignal.postNotification({
+                        contents: {
+                          en: `قام ${currentUser} بالرد على رسالتك.`,
+                          ar: `قام ${currentUser} بالرد على رسالتك.`,
+                        },
+                        headings: {
+                          en: `دردشة ${currentRoom}`,
+                          ar: `دردشة ${currentRoom}`,
+                        },
+                        include_player_ids: [recipientUser.fcmToken],
+                      });
+                    });
+                  }
+                }
+              );
           }
         }
       );
     } else {
-      // هذه رسالة عادية، لذا نرسل إشعارًا لجميع أعضاء الغرفة
       db.ref("rooms/" + currentRoom + "/users").once("value", (snapshot) => {
         const playerIds = [];
         const roomUsers = snapshot.val();
@@ -636,6 +792,18 @@
       removeMessageFromDOM(key);
     });
 
+    // الاستماع للإشعارات الخاصة بالمستخدم
+    db.ref(`users/${userId}/notifications`).on("child_added", (snapshot) => {
+        const data = snapshot.val();
+        const key = snapshot.key;
+        displayNotification(key, data);
+    });
+    
+    // تحديث عداد الإشعارات عند تغيير حالة الإشعارات
+    db.ref(`users/${userId}/notifications`).on("child_changed", (snapshot) => {
+        updateNotificationCount();
+    });
+
     db.ref(`users/${userId}/points`).on("value", (snap) => {
       document.getElementById("pointsDisplay").textContent = `رصيدك: ${snap.val() || 0} 🎯`;
     });
@@ -674,6 +842,8 @@
       timestamp: firebase.database.ServerValue.TIMESTAMP,
       system: true,
     });
+    
+    updateNotificationCount();
   }
 
   function editMessage(msgKey) {
@@ -764,55 +934,3 @@
       span.onclick = () => {
         addReaction(msgKey, e);
         document.body.removeChild(picker);
-      };
-      picker.appendChild(span);
-    });
-    document.body.appendChild(picker);
-    picker.style.left = target.getBoundingClientRect().left + "px";
-    picker.style.top = target.getBoundingClientRect().top - 40 + "px";
-    picker.style.display = "block";
-  }
-
-  function startCall() {
-    const room = document.getElementById("room").value.trim();
-    if (room) window.open("https://meet.jit.si/" + room, "_blank");
-  }
-
-  function startVoiceCall() {
-    const room = document.getElementById("room").value.trim();
-    if (room) window.open("https://meet.jit.si/" + room + "-voice", "_blank");
-  }
-
-  window.addEventListener("beforeunload", function () {
-    const roomCode = localStorage.getItem("roomCode");
-    const userName = localStorage.getItem("userName");
-    if (roomCode && userName && userRef) {
-      db.ref("rooms/" + roomCode + "/messages").push({
-        name: "🚪 النظام",
-        message: `🚪 لقد غادر ${userName}`,
-        time: new Date().toLocaleString(),
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
-        system: true,
-      });
-      userRef.update({
-        online: false,
-        lastSeen: firebase.database.ServerValue.TIMESTAMP,
-      });
-    }
-  });
-
-  let typingTimeout = null;
-
-  document.getElementById("message").addEventListener("input", () => {
-      if (userRef && currentUser) {
-          userRef.update({ isTyping: true });
-          clearTimeout(typingTimeout);
-          typingTimeout = setTimeout(() => {
-              userRef.update({ isTyping: false });
-          }, 1000);
-      }
-  });
-
-</script>
-</body>
-</html>
