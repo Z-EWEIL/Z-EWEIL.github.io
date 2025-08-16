@@ -2,10 +2,11 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <title>Z E W E I L C H A T</title>
+  <title>ZEWEIL Private Chat</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
   <style>
     body {
       background-color: #111;
@@ -30,7 +31,7 @@
       padding: 15px;
       margin: 15px 0;
       display: flex;
-      flex-direction: column; /* تم تعديل هذا السطر ليعود للترتيب الطبيعي */
+      flex-direction: column;
     }
     .message {
       max-width: 80%;
@@ -44,14 +45,14 @@
     .my-message {
       background-color: #0f0;
       color: #000;
-      align-self: flex-end; /* تم تعديل هذا السطر لرسائل المستخدم تكون على اليمين */
-      border-bottom-right-radius: 0; /* تم تعديل هذا السطر لتكون الزاوية السفلية اليمنى مربعة */
+      align-self: flex-end;
+      border-bottom-right-radius: 0;
     }
     .other-message {
       background-color: #333;
       color: #fff;
-      align-self: flex-start; /* تم تعديل هذا السطر لرسائل الآخرين تكون على اليسار */
-      border-bottom-left-radius: 0; /* تم تعديل هذا السطر لتكون الزاوية السفلية اليسرى مربعة */
+      align-self: flex-start;
+      border-bottom-left-radius: 0;
     }
     .sender {
       font-weight: bold;
@@ -153,7 +154,6 @@
       margin-left: 5px;
       vertical-align: middle;
     }
-    /* زر متجر الرتب ثابت في أعلى اليمين */
     #shopButton {
       position: fixed;
       top: 15px;
@@ -176,15 +176,66 @@
       background-color: #0c0;
       transform: scale(1.1);
     }
+    .message-buttons {
+      display: flex;
+      gap: 5px;
+      margin-top: 5px;
+    }
+    /* تنسيق صندوق الرد الجديد */
+    #reply-box {
+      width: 90%;
+      max-width: 600px;
+      background: #222;
+      border-left: 4px solid #0f0;
+      padding: 8px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      display: none;
+    }
+    #reply-box .reply-sender {
+      font-weight: bold;
+      color: #0f0;
+      margin-bottom: 3px;
+    }
+    #reply-box .reply-content {
+      font-size: 0.9em;
+      color: #aaa;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .reply-message-container {
+      background-color: #333;
+      padding: 5px;
+      border-left: 3px solid #0f0;
+      margin-bottom: 5px;
+      border-radius: 3px;
+    }
+    .reply-message-container .reply-sender {
+      font-size: 0.8em;
+      color: #0f0;
+      font-weight: bold;
+    }
+    .reply-message-container .reply-content {
+      font-size: 0.9em;
+      color: #fff;
+    }
   </style>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "cdf1cf05-b988-4319-8e96-506340c18abe",
+      });
+    });
+  </script>
 </head>
 <body>
   <div id="onlineToggle">👥</div>
   <div id="onlineList"></div>
-
   <a href="https://zeweil-chat.vercel.app/rank-shop.html" id="shopButton" title="متجر الرتب">🛒</a>
-
-  <h2>🔐 Z e w e i l c h a T</h2>
+  <h2>🌐 ℤ 𝔼 𝕎 𝔼 𝕀 𝕃  ℂ ℍ 𝔸 𝕋</h2>
   <input type="text" id="room" placeholder="🛡️ كود الغرفة" />
   <input type="text" id="username" placeholder="🡩‍💬 اسمك" />
   <button onclick="joinRoom()">انضم</button>
@@ -195,6 +246,11 @@
     <span id="pointsDisplay">رصيدك: 0 🎯</span>
   </div>
   <div id="chat-box"></div>
+  <div id="reply-box">
+    <span class="close-btn" onclick="closeReplyBox()">✖</span>
+    <div class="reply-sender"></div>
+    <div class="reply-content"></div>
+  </div>
   <input type="text" id="message" placeholder="💬 رسالتك" />
   <button onclick="sendMessage()">إرسال</button>
   <button onclick="startCall()">📹 مكالمة فيديو</button>
@@ -211,11 +267,15 @@
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  const messaging = firebase.messaging(); 
 
   let currentRoom = "";
   let currentUser = "";
   let userId = localStorage.getItem("savedUserId") || null;
   let userRef = null;
+  // متغير جديد لتخزين مفتاح الرسالة التي يتم الرد عليها
+  let replyingToMessageKey = null;
+
 
   firebase.auth().onAuthStateChanged((user) => {
     if (user) {
@@ -272,6 +332,29 @@
       return;
     }
 
+    // هنا يتم فحص وجود الرد
+    if (data.repliedTo) {
+      db.ref(`rooms/${currentRoom}/messages/${data.repliedTo}`).once("value", (snap) => {
+        if (snap.exists()) {
+          const repliedToData = snap.val();
+          const replyBoxHTML = `
+            <div class="reply-message-container">
+              <div class="reply-sender">${repliedToData.name}</div>
+              <div class="reply-content">${repliedToData.message}</div>
+            </div>
+          `;
+          msgDiv.innerHTML += replyBoxHTML;
+        }
+        // استدعاء الدالة الرئيسية بعد جلب بيانات الرد
+        renderMessageContent(msgDiv, key, data);
+      });
+    } else {
+      // إذا لم يكن هناك رد، استدعاء الدالة مباشرة
+      renderMessageContent(msgDiv, key, data);
+    }
+  }
+
+  function renderMessageContent(msgDiv, key, data) {
     db.ref(`users`).orderByChild("name").equalTo(data.name).once("value", (snap) => {
       let rank = "beginner";
       snap.forEach((userSnap) => {
@@ -281,40 +364,48 @@
       });
 
       const rankImg = getRankImg(rank);
-
-      // تعديل هنا: نحدد الرسالة إذا كانت لك حسب userId وليس فقط الاسم
       const isMyMessage = data.userId === userId;
 
       msgDiv.classList.add(isMyMessage ? "my-message" : "other-message");
       msgDiv.ondblclick = () => showEmojiPicker(msgDiv, key);
 
-      msgDiv.innerHTML = `
+      // إضافة محتوى الرسالة الحالي
+      msgDiv.innerHTML += `
         <div class="sender">${data.name} ${rankImg}</div>
         <div class="message-content">${data.message}</div>
         <div class="time">${formatDateTime(data.timestamp)}</div>
       `;
 
+      const buttonsDiv = document.createElement("div");
+      buttonsDiv.className = "message-buttons";
+      
+      const giftBtn = document.createElement("button");
+      giftBtn.textContent = "🎁";
+      giftBtn.onclick = () => sendGift(data.name);
+
+      const replyBtn = document.createElement("button");
+      replyBtn.textContent = "رد";
+      replyBtn.onclick = () => replyToMessage(key, data.name, data.message);
+
+      buttonsDiv.appendChild(replyBtn);
+      buttonsDiv.appendChild(giftBtn);
+      msgDiv.appendChild(buttonsDiv);
+
+
       if (isMyMessage) {
         const editBtn = document.createElement("button");
         editBtn.textContent = "✏️";
         editBtn.title = "تعديل الرسالة";
-        editBtn.style.marginLeft = "5px";
         editBtn.onclick = () => editMessage(key);
 
         const deleteBtn = document.createElement("button");
         deleteBtn.textContent = "🗑️";
         deleteBtn.title = "حذف الرسالة";
-        deleteBtn.style.marginLeft = "5px";
         deleteBtn.onclick = () => deleteMessage(key);
 
-        msgDiv.appendChild(editBtn);
-        msgDiv.appendChild(deleteBtn);
+        buttonsDiv.appendChild(editBtn);
+        buttonsDiv.appendChild(deleteBtn);
       }
-
-      const giftBtn = document.createElement("button");
-      giftBtn.textContent = "🎁";
-      giftBtn.onclick = () => sendGift(data.name);
-      msgDiv.appendChild(giftBtn);
 
       const reactionsDiv = document.createElement("div");
       reactionsDiv.className = "reactions";
@@ -345,65 +436,24 @@
       return;
     }
 
-    db.ref(`users`).orderByChild("name").equalTo(data.name).once("value", (snap) => {
-      let rank = "beginner";
-      snap.forEach((userSnap) => {
-        if (userSnap.exists()) {
-          rank = userSnap.val().rank || "beginner";
+    msgDiv.innerHTML = '';
+    if (data.repliedTo) {
+      db.ref(`rooms/${currentRoom}/messages/${data.repliedTo}`).once("value", (snap) => {
+        if (snap.exists()) {
+          const repliedToData = snap.val();
+          const replyBoxHTML = `
+            <div class="reply-message-container">
+              <div class="reply-sender">${repliedToData.name}</div>
+              <div class="reply-content">${repliedToData.message}</div>
+            </div>
+          `;
+          msgDiv.innerHTML += replyBoxHTML;
         }
+        renderMessageContent(msgDiv, key, data);
       });
-
-      const rankImg = getRankImg(rank);
-
-      const isMyMessage = data.userId === userId;
-
-      msgDiv.className = "message";
-      msgDiv.classList.add(isMyMessage ? "my-message" : "other-message");
-      msgDiv.ondblclick = () => showEmojiPicker(msgDiv, key);
-
-      msgDiv.innerHTML = `
-        <div class="sender">${data.name} ${rankImg}</div>
-        <div class="message-content">${data.message}</div>
-        <div class="time">${formatDateTime(data.timestamp)}</div>
-      `;
-
-      if (isMyMessage) {
-        const editBtn = document.createElement("button");
-        editBtn.textContent = "✏️";
-        editBtn.title = "تعديل الرسالة";
-        editBtn.style.marginLeft = "5px";
-        editBtn.onclick = () => editMessage(key);
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.textContent = "🗑️";
-        deleteBtn.title = "حذف الرسالة";
-        deleteBtn.style.marginLeft = "5px";
-        deleteBtn.onclick = () => deleteMessage(key);
-
-        msgDiv.appendChild(editBtn);
-        msgDiv.appendChild(deleteBtn);
-      }
-
-      const giftBtn = document.createElement("button");
-      giftBtn.textContent = "🎁";
-      giftBtn.onclick = () => sendGift(data.name);
-      msgDiv.appendChild(giftBtn);
-
-      const reactionsDiv = document.createElement("div");
-      reactionsDiv.className = "reactions";
-      if (data.reactions) {
-        Object.entries(data.reactions).forEach(([emoji, users]) => {
-          if (users.length > 0) {
-            const r = document.createElement("div");
-            r.className = "reaction";
-            r.textContent = `${emoji} ${users.length}`;
-            reactionsDiv.appendChild(r);
-          }
-        });
-      }
-
-      msgDiv.appendChild(reactionsDiv);
-    });
+    } else {
+      renderMessageContent(msgDiv, key, data);
+    }
   }
 
   function removeMessageFromDOM(key) {
@@ -413,20 +463,122 @@
     }
   }
 
+  function replyToMessage(msgKey, username, messageContent) {
+    replyingToMessageKey = msgKey;
+    displayReplyBox(username, messageContent);
+  }
+
+  function displayReplyBox(username, messageContent) {
+      const replyBox = document.getElementById("reply-box");
+      const replySender = replyBox.querySelector(".reply-sender");
+      const replyContent = replyBox.querySelector(".reply-content");
+      
+      replySender.textContent = `الرد على ${username}`;
+      replyContent.textContent = messageContent;
+      replyBox.style.display = "block";
+      document.getElementById("message").focus();
+  }
+
+  function closeReplyBox() {
+      document.getElementById("reply-box").style.display = "none";
+      replyingToMessageKey = null;
+  }
+  
   function sendMessage() {
     const msg = document.getElementById("message").value.trim();
     if (!currentRoom || !currentUser || !msg) return;
-    db.ref("rooms/" + currentRoom + "/messages").push({
-      userId: userId, // إضافة userId هنا
+
+    const newMessageRef = db.ref("rooms/" + currentRoom + "/messages").push();
+    newMessageRef.set({
+      userId: userId,
       name: currentUser,
       time: new Date().toLocaleString(),
       timestamp: firebase.database.ServerValue.TIMESTAMP,
       message: msg,
       reactions: {},
+      repliedTo: replyingToMessageKey,
     });
-    document.getElementById("message").value = "";
-  }
 
+    if (replyingToMessageKey) {
+      // هذه رسالة رد، لذا نرسل إشعارًا للشخص الذي تم الرد عليه فقط
+      db.ref(`rooms/${currentRoom}/messages/${replyingToMessageKey}`).once(
+        "value",
+        (snapshot) => {
+          const originalMessage = snapshot.val();
+          if (originalMessage && originalMessage.userId) {
+            db.ref(`rooms/${currentRoom}/users/${originalMessage.userId}`).once(
+              "value",
+              (userSnapshot) => {
+                const recipientUser = userSnapshot.val();
+                if (
+                  recipientUser &&
+                  recipientUser.notificationsEnabled !== false &&
+                  recipientUser.fcmToken &&
+                  originalMessage.userId !== userId
+                ) {
+                  // نرسل الإشعار فقط لصاحب الرسالة الأصلية
+                  OneSignal.push(() => {
+                    OneSignal.postNotification({
+                      contents: {
+                        en: `قام ${currentUser} بالرد على رسالتك.`,
+                        ar: `قام ${currentUser} بالرد على رسالتك.`,
+                      },
+                      headings: {
+                        en: `دردشة ${currentRoom}`,
+                        ar: `دردشة ${currentRoom}`,
+                      },
+                      include_player_ids: [recipientUser.fcmToken],
+                    });
+                  });
+                }
+              }
+            );
+          }
+        }
+      );
+    } else {
+      // هذه رسالة عادية، لذا نرسل إشعارًا لجميع أعضاء الغرفة
+      db.ref("rooms/" + currentRoom + "/users").once("value", (snapshot) => {
+        const playerIds = [];
+        const roomUsers = snapshot.val();
+        if (roomUsers) {
+          Object.keys(roomUsers).forEach((recipientUserId) => {
+            if (recipientUserId !== userId) {
+              const recipientUser = roomUsers[recipientUserId];
+              if (
+                recipientUser.notificationsEnabled !== false &&
+                recipientUser.fcmToken
+              ) {
+                playerIds.push(recipientUser.fcmToken);
+              }
+            }
+          });
+        }
+        if (playerIds.length > 0) {
+          OneSignal.push(() => {
+            OneSignal.postNotification({
+              contents: {
+                en: `رسالة جديدة من ${currentUser}: ${msg}`,
+                ar: `رسالة جديدة من ${currentUser}: ${msg}`,
+              },
+              headings: {
+                en: `دردشة ${currentRoom}`,
+                ar: `دردشة ${currentRoom}`,
+              },
+              include_player_ids: playerIds,
+            });
+          });
+        }
+      });
+    }
+
+    document.getElementById("message").value = "";
+    closeReplyBox();
+    userRef.update({
+      isTyping: false
+    });
+  }
+  
   function joinRoom() {
     const room = document.getElementById("room").value.trim();
     const name = document.getElementById("username").value.trim();
@@ -437,22 +589,28 @@
     userRef = db.ref(`rooms/${room}/users/${userId}`);
     const now = Date.now();
 
-    // تحديث بيانات المستخدم العامة
     db.ref(`users/${userId}`)
       .once("value")
       .then((snapshot) => {
         if (snapshot.exists()) {
           db.ref(`users/${userId}`).update({ name: currentUser });
         } else {
-          db.ref(`users/${userId}`).set({ name: currentUser, points: 0 });
+          db.ref(`users/${userId}`).set({ name: currentUser, points: 0, notificationsEnabled: true });
         }
       });
 
-    // إضافة المستخدم في الغرفة
-    userRef.set({ name: currentUser, online: true, lastSeen: now, rank: "beginner" });
+    userRef.set({ name: currentUser, online: true, isTyping: false, lastSeen: now, rank: "beginner" });
     userRef.onDisconnect().update({
       online: false,
       lastSeen: firebase.database.ServerValue.TIMESTAMP,
+    });
+
+    messaging.requestPermission().then(() => {
+        return messaging.getToken();
+    }).then((token) => {
+        userRef.update({ fcmToken: token });
+    }).catch((err) => {
+        console.error('An error occurred while retrieving token. ', err);
     });
 
     localStorage.setItem("roomCode", currentRoom);
@@ -461,7 +619,6 @@
     db.ref("rooms/" + room + "/messages").off();
     document.getElementById("chat-box").innerHTML = "";
 
-    // **التعديل هنا:** استخدم orderByChild("timestamp") لترتيب الرسائل بشكل صحيح
     db.ref("rooms/" + room + "/messages").orderByChild("timestamp").on("child_added", (snapshot) => {
       const data = snapshot.val();
       const key = snapshot.key;
@@ -494,21 +651,22 @@
         const rank = user.rank || "beginner";
 
         let line = `• ${name} ${getRankImg(rank)} `;
-        if (online) {
-          line += "🟢";
+        if (user.isTyping) {
+            line += "✍️ يكتب الآن";
+        } else if (online) {
+            line += "🟢";
         } else {
-          const diff = Date.now() - lastSeen;
-          const minutes = Math.floor(diff / 60000);
-          if (minutes < 1) line += "⭕ منذ لحظات";
-          else if (minutes < 60) line += `⭕ منذ ${minutes} دقيقة`;
-          else line += `⭕ منذ ${Math.floor(minutes / 60)} ساعة`;
+            const diff = Date.now() - lastSeen;
+            const minutes = Math.floor(diff / 60000);
+            if (minutes < 1) line += "⭕ منذ لحظات";
+            else if (minutes < 60) line += `⭕ منذ ${minutes} دقيقة`;
+            else line += `⭕ منذ ${Math.floor(minutes / 60)} ساعة`;
         }
 
         list.innerHTML += `${line}<br>`;
       });
     });
 
-    // رسالة نظام عند الانضمام
     db.ref("rooms/" + room + "/messages").push({
       name: "🚪 النظام",
       message: `📢 لقد انضم ${name}`,
@@ -642,6 +800,19 @@
       });
     }
   });
+
+  let typingTimeout = null;
+
+  document.getElementById("message").addEventListener("input", () => {
+      if (userRef && currentUser) {
+          userRef.update({ isTyping: true });
+          clearTimeout(typingTimeout);
+          typingTimeout = setTimeout(() => {
+              userRef.update({ isTyping: false });
+          }, 1000);
+      }
+  });
+
 </script>
 </body>
 </html>
